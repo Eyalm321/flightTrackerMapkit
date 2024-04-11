@@ -100,14 +100,16 @@ export class MainPage implements AfterViewInit {
           map(() => instance)
         );
       }),
-      switchMap((instance) => {
+      switchMap(async (instance) => {
         this.cdr.detectChanges();
-        if (!instance) return of(instance);
+        if (!instance) return instance;
         console.log('Map instance:', instance);
 
-        return this.updateLocationAndDistanceOnMap(instance).pipe(
-          last(),
-          map(() => instance));
+        const position = await this.geolocationService.getCurrentPosition();
+        console.log('Got position:', position);
+        await this.updateLocationAndDistanceOnMap(instance);
+        instance.setCenterAnimated(new mapkit.Coordinate(position.coords.latitude, position.coords.longitude), true);
+        return instance;
       }),
     ).subscribe(
       instance => {
@@ -155,27 +157,17 @@ export class MainPage implements AfterViewInit {
     });
   }
 
-  private updateLocationAndDistanceOnMap(instance: mapkit.Map): Observable<boolean> {
+  private async updateLocationAndDistanceOnMap(instance: mapkit.Map): Promise<boolean> {
     console.log('Updating location and distance on map');
 
-    return this.geolocationService.getCurrentPosition().pipe(
-      switchMap((position) => {
-        console.log('Got position:', position);
-
-        const { latitude, longitude } = position.coords;
-        if (!instance || !position) return of(false);
-
-        instance.setCameraDistanceAnimated(1000000, true);
-        this.cdr.detectChanges();
-        return this.geolocationService.checkGeolocationPermission().then(
-          hasPermission => {
-            if (!hasPermission) return false;
-            instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-            return true;
-          });
-
-      })
-    );
+    return await this.geolocationService.getCurrentPosition().then((position) => {
+      console.log('Got position:', position);
+      const { latitude, longitude } = position.coords;
+      if (!instance || !position) return false;
+      instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true).setCameraDistanceAnimated(1000000, true);
+      this.cdr.detectChanges();
+      return true;
+    });
   }
 
   private startLoading(): void {
@@ -209,12 +201,11 @@ export class MainPage implements AfterViewInit {
   }
 
   async centerMapOnUser(): Promise<void> {
-    this.geolocationService.getCurrentPosition().subscribe({
-      next: (position) => {
-        if (!this.mapInstance) return;
-        const { latitude, longitude } = position.coords;
-        this.mapInstance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-      }
+    if (!this.mapInstance) return;
+    this.geolocationService.getCurrentPosition().then((position) => {
+      const { latitude, longitude } = position.coords;
+      this.mapInstance?.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
     });
   }
 }
+
