@@ -164,7 +164,7 @@ export class MainPage implements AfterViewInit {
       console.log('Got position:', position);
       const { latitude, longitude } = position.coords;
       if (!instance || !position) return false;
-      instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true).setCameraDistanceAnimated(1000000, true);
+      instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true).setCameraDistanceAnimated(1000000, false);
       this.cdr.detectChanges();
       return true;
     });
