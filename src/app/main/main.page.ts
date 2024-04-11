@@ -4,7 +4,7 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, E
 import { CommonModule } from '@angular/common';
 import { IonContent, IonHeader, IonTitle, IonToolbar, IonChip, IonFab, IonFabButton, IonIcon, IonProgressBar, IonButtons, IonButton } from '@ionic/angular/standalone';
 import { MapDataService } from '../shared/services/map-data.service';
-import { Observable, ObservableInput, Subscription, last, map, of, switchMap, take, tap } from 'rxjs';
+import { Observable, ObservableInput, Subscription, from, last, map, of, switchMap, take, tap } from 'rxjs';
 import { ThemeWatcherService } from '../shared/services/theme-watcher.service';
 import { AnnotationData, MapAnnotationService } from '../shared/services/map-annotation.service';
 import { addIcons } from 'ionicons';
@@ -100,16 +100,12 @@ export class MainPage implements AfterViewInit {
           map(() => instance)
         );
       }),
-      switchMap(async (instance) => {
-        this.cdr.detectChanges();
-        if (!instance) return instance;
-        console.log('Map instance:', instance);
-
-        const position = await this.geolocationService.getCurrentPosition();
-        console.log('Got position:', position);
-        await this.updateLocationAndDistanceOnMap(instance);
-        instance.setCenterAnimated(new mapkit.Coordinate(position.coords.latitude, position.coords.longitude), true);
-        return instance;
+      switchMap(instance => {
+        if (!instance) return of(instance);
+        return this.updateLocationAndDistanceOnMap(instance).pipe(
+          last(),
+          map(() => instance)
+        );
       }),
     ).subscribe(
       instance => {
@@ -157,17 +153,24 @@ export class MainPage implements AfterViewInit {
     });
   }
 
-  private async updateLocationAndDistanceOnMap(instance: mapkit.Map): Promise<boolean> {
+  private updateLocationAndDistanceOnMap(instance: mapkit.Map): Observable<boolean> {
     console.log('Updating location and distance on map');
 
-    return await this.geolocationService.getCurrentPosition().then((position) => {
-      console.log('Got position:', position);
-      const { latitude, longitude } = position.coords;
-      if (!instance || !position) return false;
-      instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true).setCameraDistanceAnimated(1000000, false);
-      this.cdr.detectChanges();
-      return true;
-    });
+    return this.geolocationService.getCurrentPosition().pipe(
+      switchMap((position) => {
+        console.log('Got position:', position);
+
+        const { latitude, longitude } = position.coords;
+        if (!instance || !position) return of(false);
+
+        instance.setCameraDistanceAnimated(1000000, true);
+        setTimeout(() => {
+          instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
+        }, 1000);
+        this.cdr.detectChanges();
+        return of(true);
+      })
+    );
   }
 
   private startLoading(): void {
@@ -200,12 +203,15 @@ export class MainPage implements AfterViewInit {
     this.mapInstance?.setCameraDistanceAnimated(1000000, true);
   }
 
-  async centerMapOnUser(): Promise<void> {
-    if (!this.mapInstance) return;
-    this.geolocationService.getCurrentPosition().then((position) => {
-      const { latitude, longitude } = position.coords;
-      this.mapInstance?.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-    });
+  centerMapOnUser(): Observable<boolean | undefined> {
+    if (!this.mapInstance) return of(false);
+    return this.geolocationService.getCurrentPosition().pipe(
+      switchMap((position) => {
+        const { latitude, longitude } = position.coords;
+        this.mapInstance?.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
+        return of(true);
+      })
+    );
   }
 }
 
