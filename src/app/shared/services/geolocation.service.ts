@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
-import { Observable } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ export class GeolocationService {
     return new Observable<Position>(observer => {
       const timeout = setTimeout(() => {
         observer.error('Timeout exceeded');
-      }, 10000);
+      }, 30000);
 
       Geolocation.getCurrentPosition()
         .then(coordinates => {
@@ -29,22 +29,11 @@ export class GeolocationService {
     });
   }
 
-  checkGeolocationPermission(): Observable<boolean> {
-    return new Observable<boolean>(observer => {
-      Geolocation.checkPermissions()
-        .then(result => {
-          if (result.location === 'granted') {
-            observer.next(true);
-            observer.complete();
-          } else {
-            observer.next(false);
-            observer.complete();
-          }
-        })
-        .catch(error => {
-          console.error('Error checking location permissions', error);
-          observer.error(error);
-        });
-    });
+  async checkGeolocationPermission(): Promise<boolean> {
+    const result_1 = await Geolocation.checkPermissions();
+    if (result_1.location === 'granted') {
+      return true;
+    }
+    return false;
   }
 }
