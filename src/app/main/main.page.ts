@@ -83,7 +83,7 @@ export class MainPage implements AfterViewInit {
         const mapkit = library;
         const mapContainer = this.mapContainer?.nativeElement;
 
-        this.mapInstance = new mapkit.Map(mapContainer, { colorScheme: theme, showsUserLocation: true });
+        this.mapInstance = new mapkit.Map(mapContainer, { colorScheme: theme });
 
         return of(this.mapInstance);
       }),
@@ -155,6 +155,7 @@ export class MainPage implements AfterViewInit {
 
         instance.setCameraDistanceAnimated(1000000, true);
         setTimeout(() => {
+          instance.showsUserLocation = true;
           instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
         }, 1000);
         this.cdr.detectChanges();
