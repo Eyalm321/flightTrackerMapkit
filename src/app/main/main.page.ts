@@ -154,10 +154,8 @@ export class MainPage implements AfterViewInit {
         if (!instance || !position) return of(false);
 
         instance.setCameraDistanceAnimated(1000000, true);
-        setTimeout(() => {
-          instance.showsUserLocation = true;
-          instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-        }, 1000);
+        instance.showsUserLocation = true;
+        instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
         this.cdr.detectChanges();
         return of(true);
       })
