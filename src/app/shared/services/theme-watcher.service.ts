@@ -11,6 +11,11 @@ export class ThemeWatcherService {
 
     constructor(@Inject(DOCUMENT) private document: Document) {
         this.listenToColorSchemeChanges();
+        this.emitThemeChange(this.isDarkMode);
+    }
+
+    private get isDarkMode(): boolean {
+        return this.document.body.classList.contains('dark');
     }
 
     listenToColorSchemeChanges(): void {
