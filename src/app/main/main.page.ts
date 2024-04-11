@@ -170,10 +170,7 @@ export class MainPage implements AfterViewInit {
         return this.geolocationService.checkGeolocationPermission().then(
           hasPermission => {
             if (!hasPermission) return false;
-            setTimeout(() => {
-              instance.showsUserLocation = true;
-              instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-            }, 1000);
+            instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
             return true;
           });
 
