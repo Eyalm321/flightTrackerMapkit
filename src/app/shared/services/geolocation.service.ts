@@ -28,4 +28,23 @@ export class GeolocationService {
         });
     });
   }
+
+  checkGeolocationPermission(): Observable<boolean> {
+    return new Observable<boolean>(observer => {
+      Geolocation.checkPermissions()
+        .then(result => {
+          if (result.location === 'granted') {
+            observer.next(true);
+            observer.complete();
+          } else {
+            observer.next(false);
+            observer.complete();
+          }
+        })
+        .catch(error => {
+          console.error('Error checking location permissions', error);
+          observer.error(error);
+        });
+    });
+  }
 }
