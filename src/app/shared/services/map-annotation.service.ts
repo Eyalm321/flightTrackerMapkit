@@ -143,17 +143,6 @@ export class MapAnnotationService {
 
   createAnnotationElement(data: AnnotationData): Observable<mapkit.Annotation | undefined> {
     if (!data || !data.coordinates) return of(undefined);
-    if (data.id === 'my-lcation') {
-      const factory = () => {
-        const img = document.createElement("img");
-        img.src = 'assets/icons/my-location.png';
-        img.width = 32;
-        img.height = 32;
-        img.style.zIndex = '1000';
-        img.style.transition = 'transform 0.5s';
-        return img;
-      };
-    }
 
     // Create a coordinate for the marker.
     const coordinate = new mapkit.Coordinate(data.coordinates.lat, data.coordinates.lng);
@@ -186,26 +175,21 @@ export class MapAnnotationService {
     return of(annotation);
   }
 
-  // createMyLocationAnnotation(mapInstance: mapkit.Map): void {
-  //   this.geolocationService.getCurrentPosition().pipe(
-  //     switchMap(position => {
-  //       if (!position || !position.coords) return of(undefined);
-  //       const { latitude, longitude } = position.coords;
-  //       const data: AnnotationData = {
-  //         id: 'my-location',
-  //         title: 'My Location',
-  //         coordinates: { lat: latitude, lng: longitude }
-  //       };
-  //       return this.createAnnotationElement(data);
-  //     }),
-  //     filter(annotation => !!annotation)
-  //   ).subscribe(annotation => {
-  //     if (annotation) {
-  //       this.annotations['my-location'] = annotation;
-  //     }
-  //   }
-  //   );
-  // }
+  createMyLocationAnnotation(mapInstance: mapkit.Map, coordinates: mapkit.Coordinate): void {
+    const factory = () => {
+      const img = document.createElement("img");
+      img.src = 'assets/icons/blue-dot.png';
+      img.width = 32;
+      img.height = 32;
+      img.style.zIndex = '1000';
+      img.style.transition = 'transform 0.5s';
+      return img;
+    };
+
+    const annotation = new mapkit.Annotation(coordinates, factory);
+    mapInstance.addAnnotation(annotation);
+  }
+
 
   handleAnnotationSelection(annotationData: AnnotationData): void {
     if (!annotationData.coordinates || !annotationData.id) return;

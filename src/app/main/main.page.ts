@@ -103,6 +103,11 @@ export class MainPage implements AfterViewInit {
       switchMap(instance => {
         if (!instance) return of(instance);
         return this.updateLocationAndDistanceOnMap(instance).pipe(
+          tap((myLocation) => {
+            if (myLocation) {
+              this.mapAnnotationService.createMyLocationAnnotation(instance, myLocation);
+            }
+          }),
           last(),
           map(() => instance)
         );
@@ -153,7 +158,7 @@ export class MainPage implements AfterViewInit {
     });
   }
 
-  private updateLocationAndDistanceOnMap(instance: mapkit.Map): Observable<boolean> {
+  private updateLocationAndDistanceOnMap(instance: mapkit.Map): Observable<mapkit.Coordinate | null> {
     console.log('Updating location and distance on map');
 
     return this.geolocationService.getCurrentPosition().pipe(
@@ -161,14 +166,15 @@ export class MainPage implements AfterViewInit {
         console.log('Got position:', position);
 
         const { latitude, longitude } = position.coords;
-        if (!instance || !position) return of(false);
+        if (!instance || !position) return of(null);
 
         instance.setCameraDistanceAnimated(1000000, true);
+        const myLocation = new mapkit.Coordinate(latitude, longitude);
         setTimeout(() => {
-          instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
+          instance.setCenterAnimated(myLocation, true);
         }, 1000);
         this.cdr.detectChanges();
-        return of(true);
+        return of(myLocation);
       })
     );
   }
