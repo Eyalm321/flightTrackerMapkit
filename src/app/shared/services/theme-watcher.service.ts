@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
-import { Observable, Subject, map } from 'rxjs';
+import { Observable, Subject, map, of } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
@@ -11,17 +11,16 @@ export class ThemeWatcherService {
 
     constructor(@Inject(DOCUMENT) private document: Document) {
         this.listenToColorSchemeChanges();
-        this.emitThemeChange(this.isDarkMode);
     }
 
-    private get isDarkMode(): boolean {
-        return this.document.body.classList.contains('dark');
-    }
 
-    listenToColorSchemeChanges(): void {
+    listenToColorSchemeChanges(): Observable<boolean> {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        console.log('Initial theme:', prefersDark.matches);
+
         this.emitThemeChange(prefersDark.matches);
         prefersDark.addEventListener('change', (e) => this.emitThemeChange(e.matches));
+        return of(prefersDark.matches);
     }
 
     private emitThemeChange(isDarkMode: boolean): void {

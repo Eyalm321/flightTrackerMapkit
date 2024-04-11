@@ -84,12 +84,27 @@ export class MainPage implements AfterViewInit {
         const mapContainer = this.mapContainer?.nativeElement;
 
         this.mapInstance = new mapkit.Map(mapContainer, { colorScheme: theme });
+        console.log('Map instance:', this.mapInstance);
 
         return of(this.mapInstance);
       }),
       switchMap((instance) => {
+        return this.themeWatcher.listenToColorSchemeChanges().pipe(
+          tap((isDark) => {
+            console.log('Theme changed:', isDark);
+            if (!instance) return;
+
+            instance.colorScheme = isDark ? 'dark' : 'light';
+          }),
+          last(),
+          map(() => instance)
+        );
+      }),
+      switchMap((instance) => {
         this.cdr.detectChanges();
         if (!instance) return of(instance);
+        console.log('Map instance:', instance);
+
         return this.updateLocationAndDistanceOnMap(instance).pipe(
           last(),
           map(() => instance));
@@ -102,13 +117,10 @@ export class MainPage implements AfterViewInit {
       }
     );
 
-
-    this.themeWatcher.themeChanged$.pipe(
-      tap((isDark) => {
-        if (!this.mapInstance) return;
-        this.mapInstance.colorScheme = isDark ? 'dark' : 'light';
-
-      })).subscribe();
+    this.themeWatcher.themeChanged$.subscribe(isDark => {
+      if (!this.mapInstance) return;
+      this.mapInstance.colorScheme = isDark ? 'dark' : 'light';
+    });
 
     this.mapAnnotationService.updateAnnotationsInterval$.subscribe(interval => {
       if (this.updateAnnotationsInterval) this.updateAnnotationsInterval.unsubscribe();
@@ -154,9 +166,11 @@ export class MainPage implements AfterViewInit {
         if (!instance || !position) return of(false);
 
         instance.setCameraDistanceAnimated(1000000, true);
-        instance.showsUserLocation = true;
-        instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
         this.cdr.detectChanges();
+        setTimeout(() => {
+          instance.showsUserLocation = true;
+          instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
+        }, 500);
         return of(true);
       })
     );
