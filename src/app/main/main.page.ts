@@ -167,16 +167,16 @@ export class MainPage implements AfterViewInit {
 
         instance.setCameraDistanceAnimated(1000000, true);
         this.cdr.detectChanges();
-        setTimeout(() => {
-          return this.geolocationService.checkGeolocationPermission().then(
-            hasPermission => {
-              if (!hasPermission) return;
+        return this.geolocationService.checkGeolocationPermission().then(
+          hasPermission => {
+            if (!hasPermission) return false;
+            setTimeout(() => {
               instance.showsUserLocation = true;
               instance.setCenterAnimated(new mapkit.Coordinate(latitude, longitude), true);
-            }
-          );
-        }, 1000);
-        return of(true);
+            }, 1000);
+            return true;
+          });
+
       })
     );
   }
