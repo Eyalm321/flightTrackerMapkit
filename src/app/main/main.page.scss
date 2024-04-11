@@ -1,0 +1,109 @@
+ion-button {
+    pointer-events: all;
+}
+
+ion-header {
+    ion-icon {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+
+    .help-circle-button ion-icon {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+
+ion-content {
+    --overflow: hidden;
+    position: relative;
+}
+
+.content-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.map-container {
+    width: 100%;
+    height: 100%;
+}
+
+.arrow-back {
+    pointer-events: all;
+    --ion-color-primary-rgb: 56, 128, 255;
+
+    ion-fab-button {
+        --background: rgb(var(--ion-color-primary-rgb, 56, 128, 255), 0.8);
+        --color: --ion-text-color;
+        --box-shadow: none;
+    }
+}
+
+.ui-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    display: grid;
+    flex-wrap: wrap;
+
+    .my-location-button {
+        pointer-events: all;
+        margin-bottom: calc(var(--ion-safe-area-bottom, 0) + 48px + 8px);
+        --color: var(--ion-background-color, #fff);
+
+        ion-fab-button {
+            --box-shadow: none;
+            width: 46px;
+            height: 46px;
+        }
+    }
+
+    .num-of-planes {
+        height: fit-content;
+        color: var(--ion-color-primary);
+        background-color: rgba(var(--ion-background-color-rgb, 255, 255, 255), 0.8);
+        font-weight: 500;
+        width: fit-content;
+        justify-self: center;
+    }
+}
+
+
+@media (orientation: landscape) {
+
+    .card-container {
+        max-width: 0;
+
+        &.flight-view {
+            max-width: 100%;
+            min-width: 320px;
+            align-items: center;
+        }
+    }
+}
+
+@media (orientation: portrait) {
+    .my-location-button {
+        padding: 6px;
+    }
+
+    .card-container {
+        bottom: 0;
+        right: auto;
+        max-height: 0;
+        align-self: end;
+        width: 100%;
+
+        &.flight-view {
+            max-height: 45vh;
+            margin-bottom: max(34px, var(--ion-safe-area-bottom));
+            justify-content: center;
+        }
+    }
+}

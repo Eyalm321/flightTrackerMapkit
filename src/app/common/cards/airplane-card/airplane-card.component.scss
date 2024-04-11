@@ -1,0 +1,127 @@
+:host {
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    transition: max-width 0.2s ease-in-out, max-height 0.2s ease-in-out, bottom ease-in-out, right ease-in-out;
+    overflow: hidden;
+    justify-self: end;
+    align-self: center;
+    margin-bottom: var(--ion-safe-area-bottom);
+    margin-top: var(--ion-safe-area-top);
+    margin-right: var(--ion-safe-area-right);
+}
+
+.flight-card {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 3px 4px 0px 0px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    letter-spacing: 0.6px;
+    width: inherit;
+    background: var(--background);
+    max-height: 75vh;
+
+
+
+    .flight-info {
+        ion-card-title {
+            max-width: 200px;
+            font-size: 1.25rem;
+        }
+
+        ion-card-subtitle {
+            font-size: 1rem;
+        }
+    }
+
+    .image-container {
+        width: 100%;
+        max-height: 150px;
+        flex-shrink: 3;
+        display: flex;
+        overflow: hidden;
+        position: relative;
+
+        .flight-image {
+            width: inherit;
+            height: auto;
+            object-fit: cover;
+            visibility: hidden;
+        }
+
+        .spinner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+        }
+    }
+
+
+    .flight-header {
+        background-color: var(--ion-color-primary);
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .flight-header,
+    .airport-info {
+        flex-shrink: 1;
+        /* Lower flex-shrink value than .image-container */
+    }
+
+    .flight-info,
+    .aircraft-info {
+        flex-shrink: 0;
+        /* These elements will not shrink */
+    }
+
+    .airport-info {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        padding-top: 6px;
+
+        .airport {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .flight-description {
+        padding: 16px;
+        font-size: 14px;
+        border-top: 1px solid #eee;
+    }
+
+    ion-card-title,
+    ion-card-subtitle {
+        color: var(--ion-color-tertiary-contrast)
+    }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+    :host {
+        justify-content: flex-end;
+    }
+
+    .flight-card {
+        ion-card-header {
+            padding-left: var(--ion-padding);
+            padding-right: var(--ion-padding);
+            padding-top: var(--ion-padding);
+            padding-bottom: var(--ion-padding-half);
+        }
+
+        .image-container {
+            max-height: 125px;
+        }
+
+        ion-card-content {
+            padding: calc(var(--ion-padding) / 2) var(--ion-padding);
+        }
+    }
+}

@@ -1,0 +1,48 @@
+:host {
+    position: absolute;
+    right: 0;
+    width: fit-content;
+    margin-left: var(--ion-safe-area-left, 0);
+}
+
+ion-card {
+
+    ion-card-content {
+        font-size: 14px;
+        padding: 12px;
+        display: grid;
+        color: var(--ion-text-color);
+    }
+
+    span {
+        grid-column: 1;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        padding-bottom: 0.1px;
+    }
+
+    .seen {
+        grid-row: 1;
+        grid-column: 2;
+        display: flex;
+        gap: 2px;
+        margin-left: 12px;
+
+        ion-icon {
+            font-size: 18px;
+        }
+    }
+
+    .value {
+        font-weight: 500;
+    }
+}
+
+@media (orientation: landscape) {
+    :host {
+        top: auto;
+        left: 0;
+        bottom: 0;
+    }
+}
