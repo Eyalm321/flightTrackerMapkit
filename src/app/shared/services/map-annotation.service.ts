@@ -179,8 +179,8 @@ export class MapAnnotationService {
     const factory = () => {
       const img = document.createElement("img");
       img.src = 'assets/icons/blue-dot.png';
-      img.width = 32;
-      img.height = 32;
+      img.width = 18;
+      img.height = 18;
       img.style.zIndex = '1000';
       img.style.transition = 'transform 0.5s';
       return img;
