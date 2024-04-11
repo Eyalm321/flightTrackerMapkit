@@ -63,7 +63,7 @@ export class MainPage implements AfterViewInit {
   ) { }
 
   navigateToGithub(): void {
-    window.open('https://github.com/Eyalm321/Flight-Tracker', '_blank');
+    window.open('https://github.com/Eyalm321/flightTrackerMapkit', '_blank');
   }
 
   navigateToAbout() {
