@@ -54,7 +54,7 @@ ion-content {
 
     .my-location-button {
         pointer-events: all;
-        margin-bottom: calc(var(--ion-safe-area-bottom, 0) + 48px + 8px);
+        margin-bottom: calc(var(--ion-safe-area-bottom, 0));
         --color: var(--ion-background-color, #fff);
 
         ion-fab-button {
@@ -104,6 +104,13 @@ ion-content {
             max-height: 45vh;
             margin-bottom: max(34px, var(--ion-safe-area-bottom));
             justify-content: center;
+        }
+    }
+
+    // computer
+    @media (min-width: 1024px) {
+        .my-location-button {
+            margin-bottom: calc(var(--ion-safe-area-bottom, 0) + 48px + 8px);
         }
     }
 }
