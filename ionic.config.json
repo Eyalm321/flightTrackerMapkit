@@ -1,0 +1,7 @@
+{
+  "name": "flightTrackerMapkit",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}
