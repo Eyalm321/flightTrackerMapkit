@@ -93,11 +93,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
         );
       }),
     ).subscribe((instance) => {
-      instance.addAnnotations(this.mapAnnotationService.getAnnotations());
-      setTimeout(() => {
-        instance.showItems(this.mapAnnotationService.getAnnotations());
-        this.mapAnnotationService.setupAllPlanesUpdates();
-      }, 1000);
+      const annotations = this.mapAnnotationService.getAnnotations();
+      instance.addAnnotations(annotations);
+      this.mapAnnotationService.setupAllPlanesUpdates();
     });
 
     this.setupSubscriptions();

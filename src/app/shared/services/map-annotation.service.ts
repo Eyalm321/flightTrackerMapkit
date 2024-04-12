@@ -46,7 +46,7 @@ export class MapAnnotationService {
   }
 
   setupAllPlanesUpdates(): void {
-    const newInterval = interval(4000).pipe(
+    const newInterval = interval(3000).pipe(
       startWith(0),
       mergeMap(_ => {
         return this.fetchAnnotationData();
