@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { MapDataService } from './map-data.service';
-import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin } from 'rxjs';
+import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap } from 'rxjs';
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
@@ -34,7 +34,6 @@ export class MapAnnotationService {
     private mapStateService: MapStateService,
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
-    private geolocationService: GeolocationService,
   ) {
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
@@ -47,26 +46,34 @@ export class MapAnnotationService {
   }
 
   setupAllPlanesUpdates(): void {
-    [500, 1500].forEach(delay =>
-      setTimeout(() => this.updatePlanesInView(), delay)
-    );
-
     const newInterval = interval(4000).pipe(
       startWith(0),
-      tap(() => {
-        this.updatePlanesInView();
+      mergeMap(_ => {
+        return this.fetchAnnotationData();
+      }),
+      switchMap((annotationsData: AnnotationData[], number: number) => {
+        this.updateMarkers(annotationsData);
+        return of(number);
       }),
     );
     this.setInterval(newInterval);
   }
 
-  private updatePlanesInView(): void {
-    const mapInstance = this.mapDataService?.getMapInstance();
-    if (!mapInstance) return;
+  fetchAnnotationData(coords?: mapkit.Coordinate): Observable<AnnotationData[]> {
+    let lat, lon, radius;
+    if (coords) {
+      lat = coords.latitude;
+      lon = coords.longitude;
+      radius = 150;
+    } else {
+      const mapInstance = this.mapDataService?.getMapInstance();
+      if (!mapInstance) return of([]);
+      const mapRect: mapkit.MapRect = mapInstance.visibleMapRect;
+      ({ lat, lon, radius } = this.mapDataService.calculateBoundsCenterAndRadius(mapRect));
+    }
+    console.log('Getting annotation data for:', lat, lon, radius);
 
-    const mapRect: mapkit.MapRect = mapInstance.visibleMapRect;
-    const { lat, lon, radius } = this.mapDataService.calculateBoundsCenterAndRadius(mapRect);
-    combineLatest([
+    return combineLatest([
       this.adsbService.getAircraftsByLocation(lat, lon, radius).pipe(catchError(() => of({ ac: [] }))),
       this.adsbService.getMilAircrafts().pipe(catchError(() => of({ ac: [] })))
     ]).pipe(
@@ -77,12 +84,12 @@ export class MapAnnotationService {
           }
           return acc;
         }, []);
-        return this.mapDataService.mapAnnotationDataFromAll(uniqueAircrafts);
+        const result = this.mapDataService.mapAnnotationDataFromAll(uniqueAircrafts);
+        console.log('Mapped annotation data:', result);
+
+        return result;
       }),
-      tap(combinedAircrafts => {
-        this.mapStateService.updateMarkers(combinedAircrafts);
-      })
-    ).subscribe();
+    );
   }
 
 
@@ -143,31 +150,11 @@ export class MapAnnotationService {
 
   createAnnotationElement(data: AnnotationData): Observable<mapkit.Annotation | undefined> {
     if (!data || !data.coordinates) return of(undefined);
-
-    // Create a coordinate for the marker.
     const coordinate = new mapkit.Coordinate(data.coordinates.lat, data.coordinates.lng);
-
-    const factory = () => {
-      const img = document.createElement("img");
-      let src;
-      if (data.aircraftDetails?.model) {
-        img.src = this.airplaneDataService.getAircraftTypeMarkerIcon(data.aircraftDetails.model);
-      } else {
-        img.src = 'assets/icons/airplane.png';
-      }
-      img.width = 32;
-      img.height = 32;
-      img.style.zIndex = '1000';
-      img.style.transition = 'transform 0.5s';
-      img.style.cursor = 'pointer';
-      img.style.pointerEvents = 'all';
-      return img;
-    };
-
+    const factory = this.createAnnotationElementFactory(data);
     // Create a new MarkerAnnotation instance.
     const annotation = new mapkit.Annotation(coordinate, factory);
     annotation.data = data;
-    annotation.size = { width: 32, height: 32 };
     annotation.anchorOffset = new DOMPoint(-16, -16);
     annotation.addEventListener('select', _ => {
       this.handleAnnotationSelection(data);
@@ -175,14 +162,27 @@ export class MapAnnotationService {
     return of(annotation);
   }
 
+  createAnnotationElementFactory(data: AnnotationData): () => HTMLElement {
+    const factory = () => {
+      const img = document.createElement("img");
+      if (data.aircraftDetails?.model) {
+        img.src = this.airplaneDataService.getAircraftTypeMarkerIcon(data.aircraftDetails.model);
+      } else {
+        img.src = 'assets/icons/airplane.svg';
+      }
+      img.classList.add('plane-icon');
+      img.style.transform = `rotate(${data.dynamic?.heading ?? 0}deg)`;
+      img.style.scale = `${this.getScaleByAltitude(data.dynamic?.altitude ?? 0)}`;
+      return img;
+    };
+    return factory;
+  }
+
   createMyLocationAnnotation(mapInstance: mapkit.Map, coordinates: mapkit.Coordinate): void {
     const factory = () => {
       const img = document.createElement("img");
       img.src = 'assets/icons/blue-dot.png';
-      img.width = 18;
-      img.height = 18;
-      img.style.zIndex = '1000';
-      img.style.transition = 'transform 0.5s';
+      img.classList.add('my-location-icon');
       return img;
     };
 
@@ -236,6 +236,10 @@ export class MapAnnotationService {
     this.updateAnnotationsIntervalSubject.next(interval);
   }
 
+  getAnnotations(): mapkit.Annotation[] {
+    return Object.values(this.annotations);
+  }
+
   removeAllOtherAnnotations(id: string): Observable<void> {
     // Map each annotation removal to an Observable, except for the one with the specified id
     const removalObservables = Object.keys(this.annotations)
@@ -257,6 +261,21 @@ export class MapAnnotationService {
     return forkJoin(removalObservables).pipe(
       map(() => undefined) // Ensure the Observable<void> type is matched
     );
+  }
+
+  initAllAnnotationData(annotationsData: AnnotationData[]): void {
+    annotationsData.forEach(data => {
+      const factory = this.createAnnotationElementFactory(data);
+      if (!data.id || !data.coordinates) return;
+      const annotation = new mapkit.Annotation(new mapkit.Coordinate(data.coordinates.lat, data.coordinates.lng), factory);
+      annotation.data = data;
+      annotation.anchorOffset = new DOMPoint(-16, -16);
+      annotation.addEventListener('select', _ => {
+        this.handleAnnotationSelection(data);
+      });
+
+      this.annotations[data.id] = annotation;
+    });
   }
 
   updateAnnotationData(data: AnnotationData): void {
@@ -303,11 +322,7 @@ export class MapAnnotationService {
     });
 
     // Add all new annotations in bulk after creation
-    forkJoin(newAnnotations).subscribe({
-      complete: () => {
-        // Optionally, perform actions after all new annotations have been added
-      }
-    });
+    forkJoin(newAnnotations).subscribe();
   }
 
   addOrUpdateAnnotation(annotationData: AnnotationData): void {

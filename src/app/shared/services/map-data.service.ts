@@ -7,24 +7,16 @@ import { AdsbService, Aircraft, ApiResponse, FlightRoutes } from './adsb.service
 import { AnnotationData } from './map-annotation.service';
 import { MapStateService } from './map-state.service';
 
-interface LatLng {
-  lat: number;
-  lng: number;
-}
-
 @Injectable({
   providedIn: 'root'
 })
 export class MapDataService implements OnDestroy {
   private mapInstance?: mapkit.Map;
-  private mapkit: any;
-  private initialLocation: LatLng = { lat: 37.7749, lng: -122.4194 };
   private polyline?: mapkit.PolylineOverlay;
   destroy$: Subject<void> = new Subject<void>();
 
 
   constructor(
-    private mapkitService: MapkitService,
     private adsbService: AdsbService,
     private mapStateService: MapStateService,
   ) { }
@@ -32,12 +24,6 @@ export class MapDataService implements OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  initializeLibrary(): Observable<{ library: typeof mapkit, data: any; }> {
-    return this.mapkitService.loadMapkit().pipe(
-      tap((mapkit) => this.mapkit = mapkit),
-      switchMap(() => of({ library: this.mapkit, data: { location: this.initialLocation } })));
   }
 
   setMapInstance(mapInstance: mapkit.Map): void {
@@ -55,9 +41,8 @@ export class MapDataService implements OnDestroy {
   mapAnnotationDataFromAll(ac: Aircraft[]): AnnotationData[] {
     if (!ac || ac.length === 0) return [];
     return ac.map(aircraft => {
-      // Initialize the result object with mandatory fields like 'id'
       let annotation: AnnotationData = {
-        id: aircraft.hex, // Assuming 'hex' is always present. Adjust if necessary.
+        id: aircraft.hex,
       };
 
       // Optional fields
@@ -138,16 +123,6 @@ export class MapDataService implements OnDestroy {
   createAircraftRoute(annotationData: AnnotationData): void {
     console.log('Creating aircraft route:', annotationData);
 
-    // const presentToast = async (position: 'top' | 'bottom' | 'middle', message: string) => {
-    //   const toast = this.toastController.create({
-    //     message,
-    //     duration: 3000,
-    //     position,
-    //     color: 'warning',
-    //   });
-
-    //   (await toast).present();
-    // };
     if (!annotationData || !annotationData.coordinates || !annotationData.flightDetails?.callsign) return;
     this.adsbService.getAircraftsRouteset([{ callsign: annotationData.flightDetails.callsign, lat: annotationData.coordinates?.lat, lon: annotationData.coordinates.lng }])
       .pipe(

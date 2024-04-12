@@ -1,8 +1,7 @@
 /// <reference path="../../../typings/mapkit-js.d.ts" />
 
 import { Injectable } from '@angular/core';
-import { Observable, catchError, from, map, of, tap } from 'rxjs';
-import { Http } from '@capacitor-community/http';
+import { Observable, of } from 'rxjs';
 import { environment } from 'src/environments/environment.prod';
 
 
@@ -11,72 +10,63 @@ import { environment } from 'src/environments/environment.prod';
 })
 export class MapkitService {
   private mapkitScriptLoaded: boolean = false;
-  private mapkit: any;
+  private mapkit?: typeof mapkit;
 
   constructor() { }
 
 
-  loadMapkit(): Observable<typeof mapkit> {
-    return new Observable((subscriber) => {
-      if (this.mapkitScriptLoaded) {
-        subscriber.next(this.mapkit);
-        subscriber.complete();
-        return;
-      }
+  loadMapkit(): Promise<void> {
+    if (this.mapkitScriptLoaded && this.mapkit) {
+      return Promise.resolve();
+    }
 
+    return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = 'https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js'; // Consider specifying libraries if needed
-      script.async = true; // Load the script asynchronously
-      script.crossOrigin = "anonymous"; // Recommended for CORS settings
+      script.async = true;
+      script.crossOrigin = "anonymous";
 
-      script.onload = () => {
+      script.onload = async () => {
         this.mapkitScriptLoaded = true;
         this.mapkit = window.mapkit;
 
-        this.mapkit.init({
-          authorizationCallback: (done: (token: string) => void) => {
-            this.getDeveloperToken().subscribe({
-              next: (token: string) => {
-                const obj = JSON.parse(token);
-                const tokenStr = obj.token;
-
-                done(tokenStr);
-
-                subscriber.next(this.mapkit);
-                subscriber.complete();
-              },
-              error: error => {
-                console.error('Error fetching developer token:', error);
-                subscriber.error(error); // Notify the observable of the error
-              },
-            });
-          }
-        });
+        try {
+          const token = await this.getDeveloperToken();
+          this.mapkit.init({
+            authorizationCallback: (done) => done(token)
+          });
+          resolve();
+        } catch (error) {
+          console.error('Error initializing mapkit with token:', error);
+          reject(error);
+        }
       };
 
-      script.onerror = error => {
+      script.onerror = (error) => {
         console.error('Script loading error:', error);
-        subscriber.error(error); // Handle script loading errors
+        reject(error);
       };
 
       document.head.appendChild(script);
     });
   }
 
-  getDeveloperToken(): Observable<string> {
-    return from(Http.request({
-      method: 'GET',
-      url: environment.mapkit.jwtEndpoint,
-    })).pipe(
-      map(response => response.data),
-      catchError(error => {
-        console.error('HTTP request error: ', error);
-        throw new Error('Failed to fetch developer token');
+  private getDeveloperToken(): Promise<string> {
+    return fetch(environment.mapkit.jwtEndpoint)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch developer token');
+        }
+        return response.json();
       })
-    );
+      .then(data => data.token)
+      .catch(error => {
+        console.error('HTTP request error:', error);
+        throw error;
+      });
   }
 
-  getMapkit(): Observable<any> {
+  getMapkit(): Observable<typeof mapkit> {
     if (!this.mapkit) {
       throw new Error('MapKit JS is not loaded yet. Call loadMapkit() first.');
     }

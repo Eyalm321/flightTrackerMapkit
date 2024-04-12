@@ -6,9 +6,7 @@
         <ion-icon name="logo-github"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title>
-      Flight Tracker
-    </ion-title>
+    <ion-title>Flight Tracker</ion-title>
     <ion-progress-bar *ngIf="isLoading"
                       type="indeterminate"></ion-progress-bar>
     <ion-buttons slot="end"
@@ -21,38 +19,8 @@
 </ion-header>
 <ion-content [fullscreen]="true">
   <div class="content-wrapper">
-    <div class="ui-overlay">
-      <ion-chip class="num-of-planes ion-padding ion-margin-top"
-                color="primary"
-                *ngIf="!trackView && visiblePlanesSum !== 0">{{visiblePlanesSum}} Aircrafts</ion-chip>
-      <ion-fab *ngIf="trackView"
-               slot="fixed"
-               vertical="top"
-               horizontal="start"
-               (click)="exitTrackView()"
-               class="arrow-back">
-        <ion-fab-button>
-          <ion-icon name="arrow-back"></ion-icon>
-        </ion-fab-button>
-      </ion-fab>
-      <app-airplane-stats-card *ngIf="selectedAnnotationData && trackView"
-                               [selectedAnnotation]="selectedAnnotationData"></app-airplane-stats-card>
-      <ion-fab *ngIf="!trackView"
-               slot="fixed"
-               vertical="bottom"
-               horizontal="end"
-               class="my-location-button">
-        <ion-fab-button color="primary"
-                        (click)="centerMapOnUser()">
-          <ion-icon name="navigate"></ion-icon>
-        </ion-fab-button>
-      </ion-fab>
-      <app-airplane-card class="card-container"
-                         [ngClass]="{'flight-view': trackView, 'portrait': trackView}"
-                         [data]="selectedAnnotationData"></app-airplane-card>
-    </div>
-    <div #mapContainer
-         class="map-container">
-    </div>
+    <app-map [trackView]="trackView"
+             [selectedAnnotationData]="selectedAnnotationData"
+             (isLoading)="startLoading()"></app-map>
   </div>
 </ion-content>

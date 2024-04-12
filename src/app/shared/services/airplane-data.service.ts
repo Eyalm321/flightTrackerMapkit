@@ -154,10 +154,9 @@ export class AirplaneDataService {
   getAircraftTypeMarkerIcon(airplaneModel: string): string {
     const typeofAircraft = this.aircraftTypes[airplaneModel as keyof typeof this.aircraftTypes];
     if (typeofAircraft === 'airplane' || typeofAircraft === 'business-jet' || typeofAircraft === 'helicopter' || typeofAircraft === 'military-jet') {
-
-      return `assets/icons/${typeofAircraft}.png`;
+      return `assets/icons/${typeofAircraft}.svg`;
     } else {
-      return `assets/icons/airplane.png`;
+      return `assets/icons/airplane.svg`;
     }
   }
 }

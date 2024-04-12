@@ -24,3 +24,18 @@
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+
+.my-location-icon {
+    width: 18px;
+    height: 18px;
+    z-index: 1000;
+}
+
+.plane-icon {
+    width: 32px;
+    height: 32px;
+    z-index: 1000;
+    transition: transform 0.5s;
+    cursor: pointer;
+    pointer-events: all;
+}
