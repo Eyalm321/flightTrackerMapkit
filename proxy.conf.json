@@ -1,0 +1,11 @@
+{
+    "/adsb": {
+        "target": "https://api.adsb.lol",
+        "secure": false,
+        "changeOrigin": true,
+        "pathRewrite": {
+            "^/adsb": ""
+        },
+        "logLevel": "debug"
+    }
+}
