@@ -6,6 +6,10 @@ import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
 import { GeolocationService } from './geolocation.service';
 
+interface LatLng {
+  lat: number;
+  lng: number;
+}
 export interface AnnotationData {
   id?: string;
   title?: string;
@@ -29,12 +33,16 @@ export class MapAnnotationService {
   selectedAnnotationDataChangedSubject: BehaviorSubject<AnnotationData | undefined> = new BehaviorSubject<AnnotationData | undefined>(undefined);
   selectedAnnotationDataChanged$: Observable<AnnotationData | undefined> = this.selectedAnnotationDataChangedSubject.asObservable();
 
+  private transitionWorker;
+
   constructor(
     private mapDataService: MapDataService,
     private mapStateService: MapStateService,
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
   ) {
+    this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
+    this.initTransitionWorkerTasks();
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
     });
@@ -43,6 +51,36 @@ export class MapAnnotationService {
       if (!annotation) return;
       this.mergeAnnotationData(annotation);
     });
+  }
+
+  initTransitionWorkerTasks(): void {
+    this.transitionWorker.onmessage = (event) => {
+      const data = event.data;
+      console.log('Received message from worker:', data.type, data);
+      switch (data.type) {
+        case 'updateAnnotation':
+          // this.updateAnnotationPosition(data.coordinate, data.id);
+          break;
+        case 'finalPosition':
+          // this.updateAnnotationPosition(data.coordinate, data.id);
+          console.log('Received final position:', data.coordinate);
+          break;
+        case 'transitionReady':
+          this.updateAnnotationPosition(data.waypoints[0], data.id);
+          console.log('Transition is ready, first waypoint:', data.waypoints[0]);
+          break;
+        default:
+          console.error('Received unknown message type from worker:', data.type);
+      }
+    };
+  }
+
+  updateAnnotationPosition(coordinate: LatLng, id: string): void {
+    if (!this.annotations[id] || !coordinate) return;
+    console.log('Updating annotation position', coordinate);
+    console.log('Annotation ID:', id);
+    const c = new mapkit.Coordinate(coordinate.lat, coordinate.lng);
+    this.annotations[id].coordinate = c;
   }
 
   setupAllPlanesUpdates(): void {
@@ -71,7 +109,6 @@ export class MapAnnotationService {
       const mapRect: mapkit.MapRect = mapInstance.visibleMapRect;
       ({ lat, lon, radius } = this.mapDataService.calculateBoundsCenterAndRadius(mapRect));
     }
-    console.log('Getting annotation data for:', lat, lon, radius);
 
     return combineLatest([
       this.adsbService.getAircraftsByLocation(lat, lon, radius).pipe(catchError(() => of({ ac: [] }))),
@@ -85,7 +122,6 @@ export class MapAnnotationService {
           return acc;
         }, []);
         const result = this.mapDataService.mapAnnotationDataFromAll(uniqueAircrafts);
-        console.log('Mapped annotation data:', result);
 
         return result;
       }),
@@ -205,7 +241,7 @@ export class MapAnnotationService {
         if (!selectedAnnotation || !selectedData || !selectedData.coordinates || !selectedData.dynamic) return;
         const annotationLocation: mapkit.Coordinate[] = [new mapkit.Coordinate(selectedData.coordinates.lat, selectedData.coordinates.lng)];
         this.mapDataService.centerMapByLatLng(selectedData.coordinates.lat, selectedData.coordinates.lng);
-        this.transitionMarkerPosition(existingAnnotation, selectedData);
+        this.startMarkerTransition(existingAnnotation, selectedData);
         this.mapDataService.changePathMiddleWaypoints(annotationLocation);
       });
     };
@@ -298,7 +334,9 @@ export class MapAnnotationService {
     Object.keys(this.annotations).forEach(id => {
       if (newDataMap.has(id)) {
         const newAnnotationData = newDataMap.get(id);
+        if (!newAnnotationData) return;
         const existingAnnotation = this.annotations[id];
+        this.startMarkerTransition(existingAnnotation, newAnnotationData);
         if (!newAnnotationData || !existingAnnotation) return;
         this.addOrUpdateAnnotation(newAnnotationData); // Reuse the logic for updating existing annotations
         newDataMap.delete(id); // Remove the processed annotation from newDataMap
@@ -329,7 +367,7 @@ export class MapAnnotationService {
     if (!annotationData.id) return;
     const existingAnnotation = this.annotations[annotationData.id];
     if (existingAnnotation) {
-      this.transitionMarkerPosition(existingAnnotation, annotationData);
+      this.startMarkerTransition(existingAnnotation, annotationData);
 
       if (existingAnnotation.element && annotationData.dynamic && annotationData.dynamic.altitude) {
         const element = existingAnnotation.element as HTMLElement;
@@ -416,6 +454,27 @@ export class MapAnnotationService {
 
     requestAnimationFrame(updatePosition);
   }
+
+
+  startMarkerTransition(existingAnnotation: mapkit.Annotation, newAnnotationData: AnnotationData) {
+
+    if (!existingAnnotation || !newAnnotationData.coordinates) {
+      return;
+    }
+
+    this.transitionWorker.postMessage({
+      task: 'startTransition',
+      payload: {
+        id: newAnnotationData.id,
+        startLat: existingAnnotation.coordinate.latitude,
+        startLng: existingAnnotation.coordinate.longitude,
+        endLat: newAnnotationData.coordinates.lat,
+        endLng: newAnnotationData.coordinates.lng,
+        duration: 4000
+      }
+    });
+  }
+
 
 
   rotateAnnotation(annotation: mapkit.Annotation, heading: number): void {
