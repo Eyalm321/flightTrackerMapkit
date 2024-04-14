@@ -1,0 +1,72 @@
+.github-button {
+    --background: none;
+    --box-shadow: none;
+
+    ion-icon {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        color: #ffffff;
+    }
+}
+
+
+.ios-list {
+    ion-list {
+        --ion-background-color: #f4f4f4;
+        --ion-padding-start: 16px;
+        --ion-padding-end: 16px;
+        --ion-padding-top: 12px;
+        --ion-padding-bottom: 12px;
+        --ion-border-color: #dcdcdc;
+        --ion-border-width: 1px;
+        --ion-border-radius: 8px;
+    }
+
+    ion-item {
+        --ion-padding-start: 0;
+        --ion-padding-end: 0;
+        --ion-padding-top: 8px;
+        --ion-padding-bottom: 8px;
+        --ion-text-color: #333333;
+        --ion-font-size: 16px;
+        --ion-font-weight: normal;
+        --ion-border-color: transparent;
+        --ion-background-color: transparent;
+
+        &.ion-activated {
+            --ion-background-color: #e6e6e6;
+        }
+
+        ion-label {
+            --ion-padding-start: 8px;
+            --ion-padding-end: 8px;
+        }
+
+        ion-icon {
+            --ion-padding-start: 8px;
+            --ion-padding-end: 8px;
+            color: #999999;
+        }
+    }
+
+    @media (prefers-color-scheme: dark) {
+        ion-list {
+            --ion-background-color: #333333;
+            --ion-border-color: #666666;
+        }
+
+        ion-item {
+            --ion-text-color: #ffffff;
+            --ion-border-color: transparent;
+
+            &.ion-activated {
+                --ion-background-color: #666666;
+            }
+
+            ion-icon {
+                color: #cccccc;
+            }
+        }
+    }
+}

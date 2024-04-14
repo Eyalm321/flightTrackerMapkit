@@ -8,6 +8,7 @@ import { addIcons } from 'ionicons';
 import { NavController } from '@ionic/angular';
 import { MapComponent } from '../map/map.component';
 import { IonicSharedModule } from '../shared/modules/ionic-shared.module';
+import { MenuComponent } from '../menu/menu.component';
 
 @Component({
   selector: 'app-main',
@@ -18,7 +19,8 @@ import { IonicSharedModule } from '../shared/modules/ionic-shared.module';
   imports: [
     CommonModule,
     MapComponent,
-    IonicSharedModule
+    IonicSharedModule,
+    MenuComponent
   ],
 })
 export class MainPage {
@@ -26,6 +28,7 @@ export class MainPage {
   selectedAnnotationData?: AnnotationData;
   trackView: boolean = false;
   isLoading: boolean = true;
+  contentId: string = "main-content";
 
   icons = addIcons({
     'arrow-back': 'https://unpkg.com/ionicons@7.1.0/dist/svg/arrow-back.svg',
@@ -39,9 +42,6 @@ export class MainPage {
     private navigationController: NavController,
   ) { }
 
-  navigateToGithub(): void {
-    window.open('https://github.com/Eyalm321/flightTrackerMapkit', '_blank');
-  }
 
   navigateToAbout() {
     this.navigationController.navigateForward('main/about');

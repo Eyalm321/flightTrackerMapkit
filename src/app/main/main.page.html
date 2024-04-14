@@ -1,10 +1,12 @@
-<ion-header [translucent]="true">
+<app-menu [contentId]="contentId"></app-menu>
+
+<ion-header [translucent]="true"
+            [id]="contentId">
   <ion-toolbar class="ion-color ion-text-center">
     <ion-buttons slot="start"
                  class="ion-padding">
-      <ion-button (click)="navigateToGithub()">
-        <ion-icon name="logo-github"></ion-icon>
-      </ion-button>
+      <ion-menu-button></ion-menu-button>
+
     </ion-buttons>
     <ion-title>Flight Tracker</ion-title>
     <ion-progress-bar *ngIf="isLoading"

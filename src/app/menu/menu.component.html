@@ -1,0 +1,28 @@
+<ion-menu [contentId]="contentId">
+  <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start">
+        <ion-title>Menu Content</ion-title>
+      </ion-buttons>
+      <ion-buttons slot="end">
+        <ion-button class="github-button"
+                    (click)="navigateToGithub()">
+          <ion-icon name="logo-github"></ion-icon>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-header>
+
+
+  <ion-content class="ion-padding">
+    <ion-list>
+      <ion-list-header>
+        <ion-label class="ion-text-center">Watch List</ion-label>
+      </ion-list-header>
+      <ion-item *ngFor="let flight of flights">
+        <ion-label>{{ flight.flight }} - {{ flight.origin }} -> {{ flight.destination }} ({{ flight.status
+          }})</ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-menu>

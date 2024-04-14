@@ -1,38 +1,59 @@
 :host {
-    padding: 0 6px;
     display: flex;
     align-items: center;
     transition: max-width 0.2s ease-in-out, max-height 0.2s ease-in-out, bottom ease-in-out, right ease-in-out;
     overflow: hidden;
     justify-self: end;
     align-self: center;
-    margin-bottom: var(--ion-safe-area-bottom);
-    margin-top: var(--ion-safe-area-top);
-    margin-right: var(--ion-safe-area-right);
+    padding-bottom: var(--ion-safe-area-bottom);
+    padding-top: var(--ion-safe-area-top);
+    padding-right: var(--ion-safe-area-right);
+    position: relative;
+    border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
+}
+
+
+.card-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--ion-color-medium);
+    color: var(--ion-color-primary-contrast);
+    width: 100%;
+    max-width: 75%;
+    align-self: center;
+    height: 2px;
+    cursor: pointer;
+    border-radius: 0 0 8px 8px;
+    position: absolute;
+    top: 0;
+    z-index: 1000;
 }
 
 .flight-card {
-    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 3px 4px 0px 0px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    max-width: 400px;
     letter-spacing: 0.6px;
     width: inherit;
-    background: var(--background);
+    background: linear-gradient(to bottom, var(--ion-color-step-100), var(--ion-color-step-50));
+    background-color: var(--background);
     max-height: 75vh;
-
+    padding: var(--ion-spacing-small);
 
 
     .flight-info {
         ion-card-title {
             max-width: 200px;
-            font-size: 1.25rem;
+            font-size: var(--ion-font-size-large);
+            color: var(--ion-color-primary);
+            padding: 0 0 var(--ion-spacing-small) 0;
         }
 
         ion-card-subtitle {
-            font-size: 1rem;
+            font-size: var(--ion-font-size-medium);
+            color: var(--ion-text-color)
         }
     }
 
@@ -43,12 +64,15 @@
         display: flex;
         overflow: hidden;
         position: relative;
+        margin: var(--ion-padding) 0;
+        padding: 0 var(--ion-padding-half);
 
         .flight-image {
             width: inherit;
             height: auto;
             object-fit: cover;
             visibility: hidden;
+            border-radius: var(--ion-border-radius-medium);
         }
 
         .spinner-container {
@@ -59,31 +83,20 @@
         }
     }
 
-
     .flight-header {
-        background-color: var(--ion-color-primary);
+        background-color: var(--background);
         display: flex;
         flex-direction: row;
-        justify-content: space-between;
-    }
-
-    .flight-header,
-    .airport-info {
-        flex-shrink: 1;
-        /* Lower flex-shrink value than .image-container */
-    }
-
-    .flight-info,
-    .aircraft-info {
-        flex-shrink: 0;
-        /* These elements will not shrink */
+        padding: var(--ion-padding);
+        color: var(--ion-color-light);
+        gap: var(--ion-spacing-large);
     }
 
     .airport-info {
         display: flex;
         justify-content: space-between;
-        gap: 6px;
-        padding-top: 6px;
+        gap: var(--ion-spacing-small);
+        padding-top: var(--ion-spacing-small);
 
         .airport {
             display: flex;
@@ -91,15 +104,16 @@
         }
     }
 
-    .flight-description {
-        padding: 16px;
-        font-size: 14px;
-        border-top: 1px solid #eee;
-    }
-
     ion-card-title,
     ion-card-subtitle {
-        color: var(--ion-color-tertiary-contrast)
+        color: var(--ion-color-medium)
+    }
+
+}
+
+@media (orientation: landscape) {
+    :host {
+        max-width: 450px;
     }
 }
 
