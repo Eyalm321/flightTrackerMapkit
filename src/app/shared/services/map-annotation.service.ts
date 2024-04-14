@@ -1,6 +1,6 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, OnDestroy } from '@angular/core';
 import { MapDataService } from './map-data.service';
-import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap } from 'rxjs';
+import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject } from 'rxjs';
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
@@ -20,9 +20,8 @@ export interface AnnotationData {
   destinationAirport?: { iata?: string, name?: string, location?: string, lat?: number, lng?: number; };
   dynamic?: { last_updated?: number, gs?: number, geom_rate?: number, rssi?: number, altitude?: number | string, heading?: number; };
   last_pos?: { lat?: number, lng?: number; };
+  waypoints?: LatLng[];
 }
-
-import { takeUntil } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -36,17 +35,23 @@ export class MapAnnotationService implements OnDestroy {
   selectedAnnotationDataChanged$: Observable<AnnotationData | undefined> = this.selectedAnnotationDataChangedSubject.asObservable();
 
   private transitionWorker;
+  private destroy$: Subject<void> = new Subject<void>();
 
   private animationFrameRequestId: number | null = null;
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+
     if (this.animationFrameRequestId !== null) {
       cancelAnimationFrame(this.animationFrameRequestId);
     }
-    this.transitionWorker.terminate();
+    if (this.transitionWorker) {
+      this.transitionWorker.terminate();
+    }
   }
 
-  private destroy$: Subject<void> = new Subject<void>();
+
 
   constructor(
     private mapDataService: MapDataService,
@@ -56,6 +61,7 @@ export class MapAnnotationService implements OnDestroy {
   ) {
     this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
+
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
     });
@@ -64,26 +70,11 @@ export class MapAnnotationService implements OnDestroy {
       if (!annotation) return;
       this.mergeAnnotationData(annotation);
     });
-    this.destroy$.next();
-    this.destroy$.complete();
-    if (this.transitionWorker) {
-      this.transitionWorker.terminate();
-    }
   }
 
   initTransitionWorkerTasks(): void {
     if (this.transitionWorker) {
       this.transitionWorker.onmessage = (message: MessageEvent<any>) => {
-        const { type, id, coordinate } = message.data;
-        switch (type) {
-          case 'updateCoordinate':
-            this.updateAnnotationPosition(coordinate, id);
-            break;
-          case 'finalCoordinate':
-            this.updateAnnotationPosition(coordinate, id);
-            // Optionally, do any final updates or cleanup here
-            break;
-        }
         const { type, id, coordinate } = message.data;
         switch (type) {
           case 'updateCoordinate':
@@ -184,7 +175,6 @@ export class MapAnnotationService implements OnDestroy {
         )
       );
 
-    // Use forkJoin to wait for all observables to emit and complete
     return forkJoin(annotationObservables).pipe(
       switchMap(annotations => {
         const validAnnotations = annotations.filter(annotation => !!annotation) as mapkit.Annotation[];
@@ -426,78 +416,43 @@ export class MapAnnotationService implements OnDestroy {
     delete this.annotations[annoId];
   }
 
-  transitionMarkerPosition(existingAnnotation: mapkit.Annotation, newAnnotationData: AnnotationData): void {
+  startMarkerTransition(existingAnnotation: mapkit.Annotation, newAnnotationData: AnnotationData) {
     if (!existingAnnotation || !newAnnotationData.coordinates) {
       return;
     }
 
-    const startLat = existingAnnotation.data.last_pos ? existingAnnotation.data.last_pos.lat : existingAnnotation.coordinate.latitude;
-    const startLng = existingAnnotation.data.last_pos ? existingAnnotation.data.last_pos.lng : existingAnnotation.coordinate.longitude;
-    const endLat = newAnnotationData.coordinates.lat;
-    const endLng = newAnnotationData.coordinates.lng;
-
-    const duration = 4000; // Duration of the transition in milliseconds
-    let startTime: number;
-    const waypoints: any[] = []; // Pre-calculate waypoints for efficiency
-
-    const easeInOutQuad = (t: number) => {
-      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    };
-
-    const precalculateWaypoints = () => {
-      for (let t = 0; t <= 1; t += 0.05) { // Adjust granularity as needed
-        const easedT = easeInOutQuad(t);
-        const lat = startLat + (endLat - startLat) * easedT;
-        const lng = startLng + (endLng - startLng) * easedT;
-        waypoints.push(new mapkit.Coordinate(lat, lng));
-      }
-    };
-
-    const changePathMiddleWaypoints = (waypoints: mapkit.Coordinate[]) => {
-      this.mapDataService.changePathMiddleWaypoints(waypoints);
-    };
-
-    precalculateWaypoints();
-
-    const updatePosition = (time: number) => {
-      if (!startTime) startTime = time;
-      const elapsedTime = time - startTime;
-      const fraction = elapsedTime / duration;
-      const index = Math.floor(fraction * (waypoints.length - 1));
-
-      if (fraction < 1) {
-        existingAnnotation.coordinate = waypoints[index];
-        requestAnimationFrame(updatePosition);
-      } else {
-        existingAnnotation.coordinate = waypoints[waypoints.length - 1];
-      }
-      // Update the line less frequently or based on significant changes
-      changePathMiddleWaypoints([waypoints[0], waypoints[index], waypoints[waypoints.length - 1]]);
-    };
-
-    requestAnimationFrame(updatePosition);
-  }
-
-
-  startMarkerTransition(existingAnnotation: mapkit.Annotation, newAnnotationData: AnnotationData) {
-
-    if (!existingAnnotation || !newAnnotationData.coordinates) {
-      return;
+    if (!newAnnotationData.waypoints) {
+      newAnnotationData.waypoints = this.calculateWaypoints(existingAnnotation.coordinate.latitude, existingAnnotation.coordinate.longitude, newAnnotationData.coordinates.lat, newAnnotationData.coordinates.lng, 4000);
     }
 
     this.transitionWorker.postMessage({
       task: 'startTransition',
       payload: {
         id: newAnnotationData.id,
-        startLat: existingAnnotation.coordinate.latitude,
-        startLng: existingAnnotation.coordinate.longitude,
-        endLat: newAnnotationData.coordinates.lat,
-        endLng: newAnnotationData.coordinates.lng,
+        waypoints: newAnnotationData.waypoints,
         duration: 4000
       }
     });
   }
 
+  calculateWaypoints(startLat: number, startLng: number, endLat: number, endLng: number, interval: number): LatLng[] {
+    const waypoints: LatLng[] = [];
+    const easeInOutQuad = (t: number) => {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    };
+
+    for (let t = 0; t <= 1; t += interval) {
+      const easedT = easeInOutQuad(t);
+      const lat = startLat + (endLat - startLat) * easedT;
+      const lng = startLng + (endLng - startLng) * easedT;
+      waypoints.push({ lat, lng });
+    }
+
+    // Ensure the final position is included
+    waypoints.push({ lat: endLat, lng: endLng });
+
+    return waypoints;
+  }
 
 
   rotateAnnotation(annotation: mapkit.Annotation, heading: number): void {
