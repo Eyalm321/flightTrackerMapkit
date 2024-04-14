@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, enableProdMode, importProvidersFrom } from '@angular/core';
+import { APP_INITIALIZER, enableProdMode, importProvidersFrom, isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { RouteReuseStrategy, provideRouter } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
@@ -8,6 +8,7 @@ import { AppComponent } from './app/app.component';
 import { environment } from './environments/environment';
 import { HttpClientModule } from '@angular/common/http';
 import { MapkitService } from './app/shared/services/mapkit.service';
+import { provideServiceWorker } from '@angular/service-worker';
 
 export function initializeMapKit(mapkitService: MapkitService): () => Promise<void> {
   return () => mapkitService.loadMapkit();  // Returns a Promise
@@ -24,10 +25,14 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes),
     importProvidersFrom(HttpClientModule),
     {
-      provide: APP_INITIALIZER,
-      useFactory: initializeMapKit,
-      deps: [MapkitService],
-      multi: true
-    }
-  ],
+        provide: APP_INITIALIZER,
+        useFactory: initializeMapKit,
+        deps: [MapkitService],
+        multi: true
+    },
+    provideServiceWorker('ngsw-worker.js', {
+        enabled: !isDevMode(),
+        registrationStrategy: 'registerWhenStable:30000'
+    })
+],
 });

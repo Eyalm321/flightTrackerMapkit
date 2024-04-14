@@ -16,8 +16,6 @@ export class ThemeWatcherService {
 
     listenToColorSchemeChanges(): Observable<boolean> {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        console.log('Initial theme:', prefersDark.matches);
-
         this.emitThemeChange(prefersDark.matches);
         prefersDark.addEventListener('change', (e) => this.emitThemeChange(e.matches));
         return of(prefersDark.matches);

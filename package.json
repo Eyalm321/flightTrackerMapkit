@@ -21,15 +21,16 @@
     "@angular/platform-browser": "^17.0.2",
     "@angular/platform-browser-dynamic": "^17.0.2",
     "@angular/router": "^17.0.2",
+    "@angular/service-worker": "^17.0.2",
     "@capacitor-community/http": "^1.4.1",
-    "@capacitor/android": "5.7.4",
-    "@capacitor/app": "5.0.7",
-    "@capacitor/core": "5.7.4",
-    "@capacitor/geolocation": "^5.0.7",
-    "@capacitor/haptics": "5.0.7",
-    "@capacitor/ios": "5.7.4",
-    "@capacitor/keyboard": "5.0.8",
-    "@capacitor/status-bar": "5.0.7",
+    "@capacitor/android": "next",
+    "@capacitor/app": "next",
+    "@capacitor/core": "next",
+    "@capacitor/geolocation": "next",
+    "@capacitor/haptics": "next",
+    "@capacitor/ios": "next",
+    "@capacitor/keyboard": "next",
+    "@capacitor/status-bar": "next",
     "@ionic/angular": "^7.5.0",
     "ionicons": "^7.2.1",
     "rxjs": "~7.8.0",
@@ -46,7 +47,7 @@
     "@angular/cli": "^17.0.0",
     "@angular/compiler-cli": "^17.0.2",
     "@angular/language-service": "^17.0.2",
-    "@capacitor/cli": "5.7.4",
+    "@capacitor/cli": "next",
     "@ionic/angular-toolkit": "^11.0.1",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
@@ -64,5 +65,13 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.2.2"
   },
-  "description": "An Ionic project"
+  "description": "An Ionic project",
+  "browserslist": [
+    "Chrome >=79",
+    "ChromeAndroid >=79",
+    "Firefox >=70",
+    "Edge >=79",
+    "Safari >=14",
+    "iOS >=14"
+  ]
 }

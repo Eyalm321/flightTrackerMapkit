@@ -121,8 +121,6 @@ export class MapDataService implements OnDestroy {
   }
 
   createAircraftRoute(annotationData: AnnotationData): void {
-    console.log('Creating aircraft route:', annotationData);
-
     if (!annotationData || !annotationData.coordinates || !annotationData.flightDetails?.callsign) return;
     this.adsbService.getAircraftsRouteset([{ callsign: annotationData.flightDetails.callsign, lat: annotationData.coordinates?.lat, lon: annotationData.coordinates.lng }])
       .pipe(
@@ -143,11 +141,7 @@ export class MapDataService implements OnDestroy {
       )
       .subscribe({
         next: (route) => {
-          console.log('Route:', route);
-
           if ('origin' in route && 'destination' in route) {
-            console.log('Route:', route);
-
             const { origin, destination } = route;
             const annotationCoordinates = annotationData.coordinates;
             if (!annotationCoordinates) return;
@@ -186,8 +180,6 @@ export class MapDataService implements OnDestroy {
 
   addFlightpathPolyline(origin: mapkit.Coordinate, destination: mapkit.Coordinate, midWaypoints: mapkit.Coordinate[]): void {
     if (!this.mapInstance) return;
-    console.log('Adding flight path');
-
     const coordinates = [origin, ...midWaypoints, destination];
     this.polyline = new mapkit.PolylineOverlay(coordinates, {
       style: new mapkit.Style({

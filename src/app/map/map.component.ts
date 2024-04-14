@@ -50,14 +50,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    console.log('Initializing map component');
-
     this.mapkitService.getMapkit().pipe(
       takeUntil(this.destroy$),
       switchMap(() => this.geolocationService.getCurrentPosition()),
       switchMap(position => {
-        console.log('Got position:', position);
-
         this.initialMapLocation = new mapkit.Coordinate(position.coords.latitude, position.coords.longitude);
         return this.mapAnnotationService.fetchAnnotationData(this.initialMapLocation);
       }),
@@ -72,8 +68,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapkitService.getMapkit().pipe(
       takeUntil(this.destroy$),
       switchMap((library) => {
-        console.log('Got mapkit library:', library);
-
         const mapkit = library;
         const mapContainer = this.mapContainer?.nativeElement;
         const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -136,18 +130,13 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapAnnotationService.selectedAnnotationDataChanged$.subscribe(annotation => {
       this.selectedAnnotationData = { ...this.selectedAnnotationData, ...annotation };
       this.cdr.detectChanges();
-      console.log('Selected annotation:', annotation);
     });
   }
 
 
   private updateLocationAndDistanceOnMap(instance: mapkit.Map): Observable<mapkit.Coordinate | null> {
-    console.log('Updating location and distance on map');
-
     return this.geolocationService.getCurrentPosition().pipe(
       switchMap((position) => {
-        console.log('Got position:', position);
-
         const { latitude, longitude } = position.coords;
         if (!instance || !position) return of(null);
 
