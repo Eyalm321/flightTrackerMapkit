@@ -25,7 +25,7 @@ export interface AnnotationData {
 @Injectable({
   providedIn: 'root'
 })
-export class MapAnnotationService implements OnDestroy {
+export class MapAnnotationService {
   annotations: { [key: string]: mapkit.Annotation; } = {};
   annotationTrackView = false;
   private updateAnnotationsIntervalSubject = new BehaviorSubject<Observable<number | undefined>>(of(undefined));
@@ -41,7 +41,7 @@ export class MapAnnotationService implements OnDestroy {
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
   ) {
-    this.transitionWorker = new Worker(new URL('./annotation-transition.worker.ts', import.meta.url), { type: 'module' });
+    this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
@@ -54,26 +54,24 @@ export class MapAnnotationService implements OnDestroy {
   }
 
   initTransitionWorkerTasks(): void {
-    this.transitionWorker.onmessage = (event) => {
-      const data = event.data;
-      console.log('Received message from worker:', data.type, data);
-      switch (data.type) {
-        case 'updateAnnotation':
-          // this.updateAnnotationPosition(data.coordinate, data.id);
-          break;
-        case 'finalPosition':
-          // this.updateAnnotationPosition(data.coordinate, data.id);
-          console.log('Received final position:', data.coordinate);
-          break;
-        case 'transitionReady':
-          this.updateAnnotationPosition(data.waypoints[0], data.id);
-          console.log('Transition is ready, first waypoint:', data.waypoints[0]);
-          break;
-        default:
-          console.error('Received unknown message type from worker:', data.type);
-      }
-    };
+    if (this.transitionWorker) {
+      this.transitionWorker.onmessage = (message: MessageEvent<any>) => {
+        const { waypoints, timestamp } = message.data;
+        if (waypoints) {
+          // Update your map line with the received waypoints
+          // updateMapLine(waypoints);
+        } else if (timestamp) {
+          // Received timestamp for animation loop, handle animation logic using requestAnimationFrame
+          this.handleAnimation(timestamp);
+        }
+      };
+    }
   }
+
+  private handleAnimation(timestamp: number) {
+
+  }
+
 
   updateAnnotationPosition(coordinate: LatLng, id: string): void {
     if (!this.annotations[id] || !coordinate) return;
@@ -462,30 +460,17 @@ export class MapAnnotationService implements OnDestroy {
       return;
     }
 
-    const start = {
-      lat: existingAnnotation.coordinate.latitude,
-      lng: existingAnnotation.coordinate.longitude
-    };
-    const end = {
-      lat: newAnnotationData.coordinates.lat,
-      lng: newAnnotationData.coordinates.lng
-    };
-    const duration = 4000; // Duration of the transition in milliseconds
-
-    this.transitionWorker.postMessage({ start, end, duration, id: newAnnotationData.id });
-
-    const updatePosition = (position) => {
-      if (position && this.annotations[newAnnotationData.id]) {
-        this.annotations[newAnnotationData.id].coordinate = new mapkit.Coordinate(position.lat, position.lng);
-        requestAnimationFrame(() => updatePosition(position));
+    this.transitionWorker.postMessage({
+      task: 'startTransition',
+      payload: {
+        id: newAnnotationData.id,
+        startLat: existingAnnotation.coordinate.latitude,
+        startLng: existingAnnotation.coordinate.longitude,
+        endLat: newAnnotationData.coordinates.lat,
+        endLng: newAnnotationData.coordinates.lng,
+        duration: 4000
       }
-    };
-
-    this.transitionWorker.onmessage = (event) => {
-      if (event.data.id === newAnnotationData.id) {
-        updatePosition(event.data.position);
-      }
-    };
+    });
   }
 
 
