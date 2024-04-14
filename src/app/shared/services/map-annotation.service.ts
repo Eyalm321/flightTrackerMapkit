@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnDestroy } from '@angular/core';
 import { MapDataService } from './map-data.service';
-import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject } from 'rxjs';
+import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject, throttleTime } from 'rxjs';
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
@@ -49,6 +49,8 @@ export class MapAnnotationService implements OnDestroy {
     if (this.transitionWorker) {
       this.transitionWorker.terminate();
     }
+    // Ensure all subscriptions are properly cleaned up to avoid memory leaks
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
 
@@ -62,7 +64,9 @@ export class MapAnnotationService implements OnDestroy {
     this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
 
-    this.mapStateService.markers$.subscribe(markers => {
+    this.mapStateService.markers$.pipe(
+      throttleTime(100) // Adjust throttle time as needed
+    ).subscribe(markers => {
       this.updateMarkers(markers);
     });
 
@@ -344,7 +348,8 @@ export class MapAnnotationService implements OnDestroy {
     const newAnnotations: Observable<mapkit.Annotation>[] = [];
 
     // Identify existing annotations to update or remove
-    Object.keys(this.annotations).forEach(id => {
+    // Use a more efficient loop or data structure if possible
+    for (const id of Object.keys(this.annotations)) {
       if (newDataMap.has(id)) {
         const newAnnotationData = newDataMap.get(id);
         if (!newAnnotationData) return;
@@ -356,7 +361,7 @@ export class MapAnnotationService implements OnDestroy {
       } else {
         annotationsToRemove.push(id); // Mark for removal
       }
-    });
+    }
 
     // Remove annotations that are no longer present
     annotationsToRemove.forEach(id => this.removeAnnotation(id));
@@ -373,7 +378,9 @@ export class MapAnnotationService implements OnDestroy {
     });
 
     // Add all new annotations in bulk after creation
-    forkJoin(newAnnotations).subscribe();
+    if (newAnnotations.length > 0) {
+      forkJoin(newAnnotations).subscribe();
+    }
   }
 
   addOrUpdateAnnotation(annotationData: AnnotationData): void {
@@ -502,4 +509,3 @@ export class MapAnnotationService implements OnDestroy {
     return Object.keys(this.annotations).length;
   }
 }
-
