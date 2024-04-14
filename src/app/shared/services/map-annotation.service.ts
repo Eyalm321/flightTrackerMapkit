@@ -310,7 +310,8 @@ export class MapAnnotationService implements OnDestroy {
 
     // Use forkJoin to wait for all removal Observables to complete
     return forkJoin(removalObservables).pipe(
-      map(() => undefined) // Ensure the Observable<void> type is matched
+      map(() => undefined), // Ensure the Observable<void> type is matched
+      take(1) // Ensure only one emission
     );
   }
 
@@ -376,7 +377,7 @@ export class MapAnnotationService implements OnDestroy {
   removeAnnotation(annoId: string): void {
     const annotation = this.annotations[annoId];
     const mapInstance = this.mapDataService?.getMapInstance();
-    if (!annotation || !mapInstance || !this.annotations[annoId] || !mapInstance.annotations.findIndex(anno => this.annotations[annoId])) return;
+    if (!annotation || !mapInstance || !this.annotations[annoId]) return;
 
     mapInstance.removeAnnotation(annotation);
     delete this.annotations[annoId];
