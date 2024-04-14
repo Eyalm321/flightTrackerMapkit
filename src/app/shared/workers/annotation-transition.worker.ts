@@ -65,3 +65,34 @@ self.addEventListener('message', (event: MessageEvent<{ existingAnnotation: { da
     }
   };
 });
+// This will be the content of annotation-transition.worker.ts
+addEventListener('message', (event) => {
+  const { start, end, duration, id } = event.data;
+  let startTime;
+
+  const easeInOutQuad = (t) => {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  };
+
+  const calculatePosition = (currentTime) => {
+    if (!startTime) {
+      startTime = currentTime;
+    }
+    const elapsedTime = currentTime - startTime;
+    const fraction = elapsedTime / duration;
+    const easedT = easeInOutQuad(fraction);
+    const lat = start.lat + (end.lat - start.lat) * easedT;
+    const lng = start.lng + (end.lng - start.lng) * easedT;
+    return { lat, lng };
+  };
+
+  const tick = (currentTime) => {
+    const position = calculatePosition(currentTime);
+    postMessage({ position, id });
+    if (currentTime - startTime < duration) {
+      requestAnimationFrame(tick);
+    }
+  };
+
+  requestAnimationFrame(tick);
+});

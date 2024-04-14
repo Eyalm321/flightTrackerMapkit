@@ -41,7 +41,7 @@ export class MapAnnotationService implements OnDestroy {
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
   ) {
-    this.transitionWorker = new Worker(new URL('./annotation-transition.worker', import.meta.url), { type: 'module' });
+    this.transitionWorker = new Worker(new URL('./annotation-transition.worker.ts', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
