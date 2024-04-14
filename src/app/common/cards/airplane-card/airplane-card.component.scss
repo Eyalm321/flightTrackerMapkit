@@ -9,8 +9,8 @@
     padding-top: var(--ion-safe-area-top);
     padding-right: var(--ion-safe-area-right);
     position: relative;
-    border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
-    max-width: 600px;
+
+
 }
 
 
@@ -29,6 +29,7 @@
     position: absolute;
     top: 0;
     z-index: 1000;
+    margin-bottom: 4px;
 }
 
 .flight-card {
@@ -42,6 +43,8 @@
     background-color: var(--background);
     max-height: 75vh;
     padding: var(--ion-spacing-small);
+    max-width: 600px;
+    border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
 
 
     .flight-info {
@@ -60,12 +63,11 @@
 
     .image-container {
         width: 100%;
-        max-height: 150px;
+        max-height: 180px;
         flex-shrink: 3;
         display: flex;
         overflow: hidden;
         position: relative;
-        margin: var(--ion-padding) 0;
         padding: 0 var(--ion-padding-half);
 
         .flight-image {
