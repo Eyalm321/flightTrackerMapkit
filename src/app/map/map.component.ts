@@ -120,7 +120,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       this.updateAnnotationsInterval = interval.subscribe();
     });
 
-    this.mapStateService.markers$.pipe(
+    this.mapAnnotationService.annotationsChanged$.pipe(
       tap(markers => {
         this.isLoading.emit();
         this.updateNumOfVisiblePlanes(markers.length);

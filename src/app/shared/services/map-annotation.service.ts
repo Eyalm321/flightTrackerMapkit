@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnDestroy } from '@angular/core';
 import { MapDataService } from './map-data.service';
-import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject, throttleTime } from 'rxjs';
+import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject } from 'rxjs';
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
@@ -33,7 +33,8 @@ export class MapAnnotationService implements OnDestroy {
   updateAnnotationsInterval$: Observable<Observable<number | undefined>> = this.updateAnnotationsIntervalSubject.asObservable();
   selectedAnnotationDataChangedSubject: BehaviorSubject<AnnotationData | undefined> = new BehaviorSubject<AnnotationData | undefined>(undefined);
   selectedAnnotationDataChanged$: Observable<AnnotationData | undefined> = this.selectedAnnotationDataChangedSubject.asObservable();
-
+  private annotationsChangedSubject: BehaviorSubject<AnnotationData[]> = new BehaviorSubject<AnnotationData[]>([]);
+  annotationsChanged$: Observable<AnnotationData[]> = this.annotationsChangedSubject.asObservable();
   private transitionWorker;
   private destroy$: Subject<void> = new Subject<void>();
 
@@ -49,8 +50,6 @@ export class MapAnnotationService implements OnDestroy {
     if (this.transitionWorker) {
       this.transitionWorker.terminate();
     }
-    // Ensure all subscriptions are properly cleaned up to avoid memory leaks
-    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
 
@@ -63,12 +62,6 @@ export class MapAnnotationService implements OnDestroy {
   ) {
     this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
-
-    this.mapStateService.markers$.pipe(
-      throttleTime(100) // Adjust throttle time as needed
-    ).subscribe(markers => {
-      this.updateMarkers(markers);
-    });
 
     this.mapStateService.selectedAnnotation$.subscribe(annotation => {
       if (!annotation) return;
@@ -95,25 +88,30 @@ export class MapAnnotationService implements OnDestroy {
 
   updateAnnotationPosition(coordinate: LatLng, id: string): void {
     if (!this.annotations[id] || !coordinate) return;
-    console.log('Updating annotation position', coordinate);
-    console.log('Annotation ID:', id);
     const c = new mapkit.Coordinate(coordinate.lat, coordinate.lng);
     this.annotations[id].coordinate = c;
   }
 
   setupAllPlanesUpdates(): void {
-    const newInterval = interval(3000).pipe(
-      startWith(0),
-      mergeMap(_ => {
-        return this.fetchAnnotationData();
-      }),
-      switchMap((annotationsData: AnnotationData[], number: number) => {
-        this.updateMarkers(annotationsData);
-        return of(number);
-      }),
-    );
-    this.setInterval(newInterval);
+    this.fetchAnnotationData().pipe(
+      switchMap(annotationsData => {
+        this.updateAnnotations(annotationsData);
+        const int = interval(3000).pipe(
+          startWith(0),
+          tap(_ => {
+            this.fetchAnnotationData().subscribe(newAnnotationsData => {
+              this.updateAnnotations(newAnnotationsData);
+            });
+          })
+        );
+        return of(int);
+      })
+    ).subscribe(int => {
+      this.setInterval(int);
+    });
   }
+
+
 
   fetchAnnotationData(coords?: mapkit.Coordinate): Observable<AnnotationData[]> {
     let lat, lon, radius;
@@ -339,7 +337,7 @@ export class MapAnnotationService implements OnDestroy {
     this.selectedAnnotationDataChangedSubject.next(this.annotations[data.id].data);
   }
 
-  updateMarkers(annotationsData: AnnotationData[]): void {
+  updateAnnotations(annotationsData: AnnotationData[]): void {
     const mapInstance = this.mapDataService.getMapInstance();
     if (!mapInstance) return;
 
@@ -347,77 +345,38 @@ export class MapAnnotationService implements OnDestroy {
     const annotationsToRemove: string[] = [];
     const newAnnotations: Observable<mapkit.Annotation>[] = [];
 
-    // Identify existing annotations to update or remove
-    // Use a more efficient loop or data structure if possible
-    for (const id of Object.keys(this.annotations)) {
+    Object.keys(this.annotations).forEach(id => {
       if (newDataMap.has(id)) {
         const newAnnotationData = newDataMap.get(id);
         if (!newAnnotationData) return;
         const existingAnnotation = this.annotations[id];
         this.startMarkerTransition(existingAnnotation, newAnnotationData);
         if (!newAnnotationData || !existingAnnotation) return;
-        this.addOrUpdateAnnotation(newAnnotationData); // Reuse the logic for updating existing annotations
-        newDataMap.delete(id); // Remove the processed annotation from newDataMap
+        newDataMap.delete(id);
       } else {
         annotationsToRemove.push(id); // Mark for removal
       }
-    }
+    });
 
-    // Remove annotations that are no longer present
     annotationsToRemove.forEach(id => this.removeAnnotation(id));
 
-    // Prepare new annotations for addition
     newDataMap.forEach((annotationData, id) => {
       newAnnotations.push(this.createPlaneAnnotation(mapInstance, annotationData).pipe(
         tap((annotation: any) => {
           if (annotation && id) {
-            this.annotations[id] = annotation; // Add to local cache
+            this.annotations[id] = annotation;
           }
         }),
       ));
     });
 
-    // Add all new annotations in bulk after creation
-    if (newAnnotations.length > 0) {
-      forkJoin(newAnnotations).subscribe();
-    }
-  }
-
-  addOrUpdateAnnotation(annotationData: AnnotationData): void {
-    if (!annotationData.id) return;
-    const existingAnnotation = this.annotations[annotationData.id];
-    if (existingAnnotation) {
-      this.startMarkerTransition(existingAnnotation, annotationData);
-
-      if (existingAnnotation.element && annotationData.dynamic && annotationData.dynamic.altitude) {
-        const element = existingAnnotation.element as HTMLElement;
-        if (annotationData.dynamic.heading) {
-          this.rotateAnnotation(existingAnnotation, annotationData.dynamic.heading);
-        }
-        element.style.scale = `${this.getScaleByAltitude(annotationData.dynamic.altitude)}`;
-      }
-    } else {
-      const mapInstance = this.mapDataService?.getMapInstance();
-      if (mapInstance && annotationData && annotationData.coordinates) {
-
-
-        this.createPlaneAnnotation(mapInstance, annotationData).pipe(
-          take(1),
-          filter(newAnnotation => !!newAnnotation))
-          .subscribe(
-            annotation => {
-              if (annotation && annotationData.id) {
-                this.annotations[annotationData.id] = annotation;
-              }
-            });
-      }
-    }
+    forkJoin(newAnnotations).subscribe(_ => this.annotationsChangedSubject.next(annotationsData));
   }
 
   removeAnnotation(annoId: string): void {
     const annotation = this.annotations[annoId];
     const mapInstance = this.mapDataService?.getMapInstance();
-    if (!annotation || !mapInstance) return;
+    if (!annotation || !mapInstance || !this.annotations[annoId] || !mapInstance.annotations.findIndex(anno => this.annotations[annoId])) return;
 
     mapInstance.removeAnnotation(annotation);
     delete this.annotations[annoId];
@@ -455,7 +414,6 @@ export class MapAnnotationService implements OnDestroy {
       waypoints.push({ lat, lng });
     }
 
-    // Ensure the final position is included
     waypoints.push({ lat: endLat, lng: endLng });
 
     return waypoints;
@@ -509,3 +467,4 @@ export class MapAnnotationService implements OnDestroy {
     return Object.keys(this.annotations).length;
   }
 }
+
