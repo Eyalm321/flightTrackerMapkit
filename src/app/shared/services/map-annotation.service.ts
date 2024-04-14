@@ -25,7 +25,7 @@ export interface AnnotationData {
 @Injectable({
   providedIn: 'root'
 })
-export class MapAnnotationService {
+export class MapAnnotationService implements OnDestroy {
   annotations: { [key: string]: mapkit.Annotation; } = {};
   annotationTrackView = false;
   private updateAnnotationsIntervalSubject = new BehaviorSubject<Observable<number | undefined>>(of(undefined));
@@ -41,7 +41,7 @@ export class MapAnnotationService {
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
   ) {
-    this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
+    this.transitionWorker = new Worker(new URL('./annotation-transition.worker', import.meta.url), { type: 'module' });
     this.initTransitionWorkerTasks();
     this.mapStateService.markers$.subscribe(markers => {
       this.updateMarkers(markers);
@@ -462,17 +462,30 @@ export class MapAnnotationService {
       return;
     }
 
-    this.transitionWorker.postMessage({
-      task: 'startTransition',
-      payload: {
-        id: newAnnotationData.id,
-        startLat: existingAnnotation.coordinate.latitude,
-        startLng: existingAnnotation.coordinate.longitude,
-        endLat: newAnnotationData.coordinates.lat,
-        endLng: newAnnotationData.coordinates.lng,
-        duration: 4000
+    const start = {
+      lat: existingAnnotation.coordinate.latitude,
+      lng: existingAnnotation.coordinate.longitude
+    };
+    const end = {
+      lat: newAnnotationData.coordinates.lat,
+      lng: newAnnotationData.coordinates.lng
+    };
+    const duration = 4000; // Duration of the transition in milliseconds
+
+    this.transitionWorker.postMessage({ start, end, duration, id: newAnnotationData.id });
+
+    const updatePosition = (position) => {
+      if (position && this.annotations[newAnnotationData.id]) {
+        this.annotations[newAnnotationData.id].coordinate = new mapkit.Coordinate(position.lat, position.lng);
+        requestAnimationFrame(() => updatePosition(position));
       }
-    });
+    };
+
+    this.transitionWorker.onmessage = (event) => {
+      if (event.data.id === newAnnotationData.id) {
+        updatePosition(event.data.position);
+      }
+    };
   }
 
 
