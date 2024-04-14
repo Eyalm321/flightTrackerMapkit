@@ -7,7 +7,55 @@ interface LatLng {
 }
 
 
-self.addEventListener('message', (event: MessageEvent<{ existingAnnotation: { data: any, coordinate: LatLng; }; newAnnotationData: any; }>) => {
+interface TransitionTask {
+  id: string;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  duration: number;
+}
+
+self.addEventListener('message', (event: MessageEvent<{ task: string; payload: TransitionTask; }>) => {
+  const { task, payload } = event.data;
+
+  if (task === 'startTransition') {
+    const { id, startLat, startLng, endLat, endLng, duration } = payload;
+    const waypoints: LatLng[] = [];
+    let startTime: number | null = null;
+
+    const easeInOutQuad = (t: number) => {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    };
+
+    const precalculateWaypoints = () => {
+      for (let t = 0; t <= 1; t += 0.05) {
+        const easedT = easeInOutQuad(t);
+        const lat = startLat + (endLat - startLat) * easedT;
+        const lng = startLng + (endLng - startLng) * easedT;
+        waypoints.push({ lat, lng });
+      }
+    };
+
+    precalculateWaypoints();
+
+    const updatePosition = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsedTime = timestamp - startTime;
+      const fraction = elapsedTime / duration;
+      const index = Math.floor(fraction * (waypoints.length - 1));
+
+      if (fraction < 1) {
+        postMessage({ type: 'updateCoordinate', id, coordinate: waypoints[index] });
+        requestAnimationFrame(updatePosition);
+      } else {
+        postMessage({ type: 'finalCoordinate', id, coordinate: waypoints[waypoints.length - 1] });
+      }
+    };
+
+    requestAnimationFrame(updatePosition);
+  }
+});
   const { existingAnnotation, newAnnotationData } = event.data;
 
   if (!existingAnnotation || !newAnnotationData.coordinates) {

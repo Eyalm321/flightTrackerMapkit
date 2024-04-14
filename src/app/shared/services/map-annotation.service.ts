@@ -25,7 +25,7 @@ export interface AnnotationData {
 @Injectable({
   providedIn: 'root'
 })
-export class MapAnnotationService {
+export class MapAnnotationService implements OnDestroy {
   annotations: { [key: string]: mapkit.Annotation; } = {};
   annotationTrackView = false;
   private updateAnnotationsIntervalSubject = new BehaviorSubject<Observable<number | undefined>>(of(undefined));
@@ -34,6 +34,15 @@ export class MapAnnotationService {
   selectedAnnotationDataChanged$: Observable<AnnotationData | undefined> = this.selectedAnnotationDataChangedSubject.asObservable();
 
   private transitionWorker;
+
+  private animationFrameRequestId: number | null = null;
+
+  ngOnDestroy(): void {
+    if (this.animationFrameRequestId !== null) {
+      cancelAnimationFrame(this.animationFrameRequestId);
+    }
+    this.transitionWorker.terminate();
+  }
 
   constructor(
     private mapDataService: MapDataService,
@@ -56,20 +65,18 @@ export class MapAnnotationService {
   initTransitionWorkerTasks(): void {
     if (this.transitionWorker) {
       this.transitionWorker.onmessage = (message: MessageEvent<any>) => {
-        const { waypoints, timestamp } = message.data;
-        if (waypoints) {
-          // Update your map line with the received waypoints
-          // updateMapLine(waypoints);
-        } else if (timestamp) {
-          // Received timestamp for animation loop, handle animation logic using requestAnimationFrame
-          this.handleAnimation(timestamp);
+        const { type, id, coordinate } = message.data;
+        switch (type) {
+          case 'updateCoordinate':
+            this.updateAnnotationPosition(coordinate, id);
+            break;
+          case 'finalCoordinate':
+            this.updateAnnotationPosition(coordinate, id);
+            // Optionally, do any final updates or cleanup here
+            break;
         }
       };
     }
-  }
-
-  private handleAnimation(timestamp: number) {
-
   }
 
 
