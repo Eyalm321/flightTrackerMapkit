@@ -22,6 +22,8 @@ export interface AnnotationData {
   last_pos?: { lat?: number, lng?: number; };
 }
 
+import { takeUntil } from 'rxjs/operators';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -44,6 +46,8 @@ export class MapAnnotationService implements OnDestroy {
     this.transitionWorker.terminate();
   }
 
+  private destroy$: Subject<void> = new Subject<void>();
+
   constructor(
     private mapDataService: MapDataService,
     private mapStateService: MapStateService,
@@ -60,6 +64,11 @@ export class MapAnnotationService implements OnDestroy {
       if (!annotation) return;
       this.mergeAnnotationData(annotation);
     });
+    this.destroy$.next();
+    this.destroy$.complete();
+    if (this.transitionWorker) {
+      this.transitionWorker.terminate();
+    }
   }
 
   initTransitionWorkerTasks(): void {
@@ -73,6 +82,15 @@ export class MapAnnotationService implements OnDestroy {
           case 'finalCoordinate':
             this.updateAnnotationPosition(coordinate, id);
             // Optionally, do any final updates or cleanup here
+            break;
+        }
+        const { type, id, coordinate } = message.data;
+        switch (type) {
+          case 'updateCoordinate':
+            this.updateAnnotationPosition(coordinate, id);
+            break;
+          case 'finalCoordinate':
+            this.updateAnnotationPosition(coordinate, id);
             break;
         }
       };
