@@ -1,5 +1,7 @@
 /* main-page.component.scss */
 ion-header {
+    padding: var(--ion-padding-half);
+
     ion-icon {
         width: 24px;
         height: 24px;
@@ -26,4 +28,12 @@ ion-content {
 /* General styles for buttons to ensure they are always interactable */
 ion-button {
     pointer-events: all;
+}
+
+ion-progress-bar {
+    z-index: 1000;
+}
+
+ion-toolbar:last-of-type {
+    --border-width: 0;
 }

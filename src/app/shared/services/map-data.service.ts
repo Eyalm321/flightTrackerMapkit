@@ -189,9 +189,21 @@ export class MapDataService implements OnDestroy {
       })
     });
     this.mapInstance.addOverlay(this.polyline);
+    this.setPolyline(this.polyline);
   }
 
-  getPolyline(): mapkit.PolylineOverlay | undefined {
+  removeAllPolylines(): void {
+    if (!this.mapInstance || !this.polyline) return;
+
+    // Remove each overlay from the map
+    this.mapInstance.removeOverlay(this.polyline);
+
+    // Clear the overlays array
+    this.polyline = undefined;
+  }
+
+
+  getPolylines(): mapkit.PolylineOverlay | undefined {
     if (!this.polyline) {
       console.error('Polyline not initialized');
     }

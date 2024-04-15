@@ -254,7 +254,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   exitTrackView(): void {
     this.renderer.removeClass(this.cardEl?.nativeElement, 'track-view');
     this.mapAnnotationService.setupAllPlanesUpdates();
-    const polyline = this.mapDataService.getPolyline();
+    const polyline = this.mapDataService.getPolylines();
     if (polyline) this.mapInstance?.removeOverlay(polyline);
     this.mapInstance?.setCameraDistanceAnimated(1000000, true);
     this.draggableCard!.nativeElement.style.transform = 'unset';

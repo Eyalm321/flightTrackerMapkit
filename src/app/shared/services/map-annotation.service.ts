@@ -1,10 +1,9 @@
-import { Inject, Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { MapDataService } from './map-data.service';
-import { take, filter, of, Observable, switchMap, tap, Subscription, BehaviorSubject, interval, startWith, takeUntil, map, catchError, combineLatest, forkJoin, mergeMap, Subject } from 'rxjs';
+import { take, of, Observable, switchMap, tap, BehaviorSubject, interval, startWith, map, catchError, combineLatest, forkJoin, Subject } from 'rxjs';
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
-import { GeolocationService } from './geolocation.service';
 
 interface LatLng {
   lat: number;
@@ -35,7 +34,6 @@ export class MapAnnotationService implements OnDestroy {
   selectedAnnotationDataChanged$: Observable<AnnotationData | undefined> = this.selectedAnnotationDataChangedSubject.asObservable();
   private annotationsChangedSubject: BehaviorSubject<AnnotationData[]> = new BehaviorSubject<AnnotationData[]>([]);
   annotationsChanged$: Observable<AnnotationData[]> = this.annotationsChangedSubject.asObservable();
-  private transitionWorker;
   private destroy$: Subject<void> = new Subject<void>();
 
   private animationFrameRequestId: number | null = null;
@@ -47,9 +45,6 @@ export class MapAnnotationService implements OnDestroy {
     if (this.animationFrameRequestId !== null) {
       cancelAnimationFrame(this.animationFrameRequestId);
     }
-    if (this.transitionWorker) {
-      this.transitionWorker.terminate();
-    }
   }
 
 
@@ -60,31 +55,12 @@ export class MapAnnotationService implements OnDestroy {
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
   ) {
-    this.transitionWorker = new Worker(new URL('../workers/annotation-transition.worker.ts', import.meta.url), { type: 'module' });
-    this.initTransitionWorkerTasks();
 
     this.mapStateService.selectedAnnotation$.subscribe(annotation => {
       if (!annotation) return;
       this.mergeAnnotationData(annotation);
     });
   }
-
-  initTransitionWorkerTasks(): void {
-    if (this.transitionWorker) {
-      this.transitionWorker.onmessage = (message: MessageEvent<any>) => {
-        const { type, id, coordinate } = message.data;
-        switch (type) {
-          case 'updateCoordinate':
-            this.updateAnnotationPosition(coordinate, id);
-            break;
-          case 'finalCoordinate':
-            this.updateAnnotationPosition(coordinate, id);
-            break;
-        }
-      };
-    }
-  }
-
 
   updateAnnotationPosition(coordinate: LatLng, id: string): void {
     if (!this.annotations[id] || !coordinate) return;
@@ -224,6 +200,7 @@ export class MapAnnotationService implements OnDestroy {
       img.classList.add('plane-icon');
       img.style.transform = `rotate(${data.dynamic?.heading ?? 0}deg)`;
       img.style.scale = `${this.getScaleByAltitude(data.dynamic?.altitude ?? 0)}`;
+      img.style.transformOrigin = 'left';
       return img;
     };
     return factory;
@@ -244,6 +221,7 @@ export class MapAnnotationService implements OnDestroy {
 
   handleAnnotationSelection(annotationData: AnnotationData): void {
     if (!annotationData.coordinates || !annotationData.id) return;
+    this.mapDataService.centerMapByLatLng(annotationData.coordinates.lat, annotationData.coordinates.lng);
     const getAircraftByIcao = () => {
       if (!annotationData.id) return;
       this.mapDataService.mapAnnotationDataFromIcao(annotationData.id).subscribe(data => {
@@ -255,7 +233,6 @@ export class MapAnnotationService implements OnDestroy {
         const existingAnnotation = this.annotations[data.id];
         if (!selectedAnnotation || !selectedData || !selectedData.coordinates || !selectedData.dynamic) return;
         const annotationLocation: mapkit.Coordinate[] = [new mapkit.Coordinate(selectedData.coordinates.lat, selectedData.coordinates.lng)];
-        this.mapDataService.centerMapByLatLng(selectedData.coordinates.lat, selectedData.coordinates.lng);
         this.startMarkerTransition(existingAnnotation, selectedData);
         this.mapDataService.changePathMiddleWaypoints(annotationLocation);
       });
@@ -316,7 +293,6 @@ export class MapAnnotationService implements OnDestroy {
       if (!data.id || !data.coordinates) return;
       const annotation = new mapkit.Annotation(new mapkit.Coordinate(data.coordinates.lat, data.coordinates.lng), factory);
       annotation.data = data;
-      annotation.anchorOffset = new DOMPoint(-16, -16);
       annotation.addEventListener('select', _ => {
         this.handleAnnotationSelection(data);
       });
@@ -383,18 +359,52 @@ export class MapAnnotationService implements OnDestroy {
       return;
     }
 
-    if (!newAnnotationData.waypoints) {
-      newAnnotationData.waypoints = this.calculateWaypoints(existingAnnotation.coordinate.latitude, existingAnnotation.coordinate.longitude, newAnnotationData.coordinates.lat, newAnnotationData.coordinates.lng, 4000);
-    }
+    const startLat = existingAnnotation.data.last_pos ? existingAnnotation.data.last_pos.lat : existingAnnotation.coordinate.latitude;
+    const startLng = existingAnnotation.data.last_pos ? existingAnnotation.data.last_pos.lng : existingAnnotation.coordinate.longitude;
+    const endLat = newAnnotationData.coordinates.lat;
+    const endLng = newAnnotationData.coordinates.lng;
 
-    this.transitionWorker.postMessage({
-      task: 'startTransition',
-      payload: {
-        id: newAnnotationData.id,
-        waypoints: newAnnotationData.waypoints,
-        duration: 4000
+    const duration = 4000; // Duration of the transition in milliseconds
+    let startTime: number;
+    const waypoints: any[] = []; // Pre-calculate waypoints for efficiency
+
+    const easeInOutQuad = (t: number) => {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    };
+
+    const precalculateWaypoints = () => {
+      for (let t = 0; t <= 1; t += 0.05) { // Adjust granularity as needed
+        const easedT = easeInOutQuad(t);
+        const lat = startLat + (endLat - startLat) * easedT;
+        const lng = startLng + (endLng - startLng) * easedT;
+        waypoints.push(new mapkit.Coordinate(lat, lng));
       }
-    });
+    };
+
+    const changePathMiddleWaypoints = (waypoints: mapkit.Coordinate[]) => {
+      this.mapDataService.changePathMiddleWaypoints(waypoints);
+    };
+
+    precalculateWaypoints();
+
+    const updatePosition = (time: number) => {
+      if (!startTime) startTime = time;
+      const elapsedTime = time - startTime;
+      const fraction = elapsedTime / duration;
+      const index = Math.floor(fraction * (waypoints.length - 1));
+      if (!newAnnotationData || !newAnnotationData.id || !newAnnotationData.coordinates) return;
+      if (fraction < 1) {
+        this.annotations[newAnnotationData.id].coordinate = waypoints[index];
+        requestAnimationFrame(updatePosition);
+      } else {
+
+        this.annotations[newAnnotationData.id].coordinate = waypoints[waypoints.length - 1];
+      }
+      // Update the line less frequently or based on significant changes
+      changePathMiddleWaypoints([waypoints[0], waypoints[index], waypoints[waypoints.length - 1]]);
+    };
+
+    requestAnimationFrame(updatePosition);
   }
 
   calculateWaypoints(startLat: number, startLng: number, endLat: number, endLng: number, interval: number): LatLng[] {

@@ -3,22 +3,21 @@
 <ion-header [translucent]="true"
             [id]="contentId">
   <ion-toolbar class="ion-color ion-text-center">
-    <ion-buttons slot="start"
-                 class="ion-padding">
+    <ion-buttons slot="start">
       <ion-menu-button></ion-menu-button>
 
     </ion-buttons>
     <ion-title>Flight Tracker</ion-title>
-    <ion-progress-bar *ngIf="isLoading"
-                      type="indeterminate"></ion-progress-bar>
     <ion-buttons slot="end"
-                 class="ion-padding help-circle-button">
+                 class="help-circle-button">
       <ion-button (click)="navigateToAbout()">
         <ion-icon name="help-circle"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
+<ion-progress-bar [ngStyle]="{ 'visibility': isLoading ? 'visible' : 'hidden' }"
+                  type="indeterminate"></ion-progress-bar>
 <ion-content [fullscreen]="true">
   <div class="content-wrapper">
     <app-map [trackView]="trackView"
