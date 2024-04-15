@@ -1,6 +1,6 @@
 /// <reference path="../../typings/mapkit-js.d.ts" />
 
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild } from '@angular/core';
 import { AnnotationData, MapAnnotationService } from '../shared/services/map-annotation.service';
 import { IonChip } from "@ionic/angular/standalone";
 import { IonicSharedModule } from '../shared/modules/ionic-shared.module';
@@ -13,6 +13,7 @@ import { ThemeWatcherService } from '../shared/services/theme-watcher.service';
 import { GeolocationService } from '../shared/services/geolocation.service';
 import { MapStateService } from '../shared/services/map-state.service';
 import { MapkitService } from '../shared/services/mapkit.service';
+import { DirectivesModule } from '../shared/modules/directives.module';
 
 @Component({
   selector: 'app-map',
@@ -25,19 +26,23 @@ import { MapkitService } from '../shared/services/mapkit.service';
     IonicSharedModule,
     AirplaneStatsCardComponent,
     AirplaneCardComponent,
+    DirectivesModule
   ]
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() trackView: boolean = false;
   @Input() selectedAnnotationData?: AnnotationData;
   @Output() isLoading: EventEmitter<void> = new EventEmitter<void>();
-  @ViewChild('mapContainer') mapContainer?: ElementRef;
+  @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('draggableContainer') draggableCard?: ElementRef<HTMLDivElement>;
+  @ViewChild('cardElement', { read: ElementRef }) cardEl?: ElementRef<HTMLDivElement>;
 
   visiblePlanesSum: number = 0;
   private mapInstance?: mapkit.Map;
   private updateAnnotationsInterval?: Subscription;
   private destroy$: Subject<void> = new Subject<void>();
   private initialMapLocation: mapkit.Coordinate = new mapkit.Coordinate(36.7783, -119.4179);
+  private hammer?: HammerManager;
 
   constructor(
     private mapkitService: MapkitService,
@@ -47,6 +52,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     private mapAnnotationService: MapAnnotationService,
     private mapStateService: MapStateService,
     private cdr: ChangeDetectorRef,
+    private renderer: Renderer2
   ) { }
 
   ngOnInit() {
@@ -69,7 +75,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       takeUntil(this.destroy$),
       switchMap((library) => {
         const mapkit = library;
-        const mapContainer = this.mapContainer?.nativeElement;
+        const mapContainer = this.mapContainer?.nativeElement as Element;
         const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         this.mapInstance = new mapkit.Map(mapContainer, { colorScheme: theme, center: this.initialMapLocation });
         return of(this.mapInstance);
@@ -93,7 +99,35 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.setupSubscriptions();
+
+    if (this.draggableCard) {
+      console.log('draggable card', this.draggableCard.nativeElement);
+
+      this.hammer = new Hammer(this.draggableCard.nativeElement, { recognizers: [[Hammer.Swipe, { direction: Hammer.DIRECTION_DOWN }], [Hammer.Pan, { direction: Hammer.DIRECTION_DOWN }]] });
+      console.log('Hammer', this.hammer);
+      this.hammer.on('pan', (event: HammerInput) => {
+        const deltaY = event.deltaY;
+        const isDraggingDown = deltaY > 0;
+        if (isDraggingDown) {
+          console.log('Panning down', deltaY);
+          this.draggableCard!.nativeElement.style.transform = `translateY(${deltaY}px)`;
+          this.cdr.detectChanges();
+        }
+      });
+
+      this.hammer.on('panend', (event: HammerInput) => {
+        const deltaY = event.deltaY;
+        const isDraggingDown = deltaY > 0;
+        if (isDraggingDown) {
+
+          console.log('Panning ended', deltaY);
+          // Remove the code below to prevent the card from going back up
+          this.exitTrackView();
+        }
+      });
+    }
   }
+
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -107,7 +141,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.mapStateService.selectedAnnotation$.subscribe(annotation => {
-      if (!annotation) return;
+      this.cdr.detectChanges();
+      console.log('Card element', this.cardEl?.nativeElement);
+
+      if (!annotation || !this.cardEl?.nativeElement) return;
+      console.log('Card element', this.cardEl?.nativeElement);
+
+      this.renderer.addClass(this.cardEl?.nativeElement, 'track-view');
+      this.renderer.addClass(this.cardEl?.nativeElement, 'portrait');
+      console.log('Card element classList', this.cardEl?.nativeElement);
+
       this.trackView = true;
       this.selectedAnnotationData = { ...this.selectedAnnotationData, ...annotation };
       this.mapInstance?.setCameraDistanceAnimated(300000, true);
@@ -115,7 +158,11 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.mapAnnotationService.updateAnnotationsInterval$.subscribe(interval => {
+      console.log('Update interval', interval);
+      console.log('this.updateAnnotationsInterval', this.updateAnnotationsInterval);
+      this.cdr.detectChanges();
       if (this.updateAnnotationsInterval) this.updateAnnotationsInterval.unsubscribe();
+      this.updateAnnotationsInterval = undefined;
       if (!interval) return;
       this.updateAnnotationsInterval = interval.subscribe();
     });
@@ -165,12 +212,16 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   exitTrackView(): void {
+    this.renderer.removeClass(this.cardEl?.nativeElement, 'track-view');
     this.trackView = false;
     this.selectedAnnotationData = undefined;
     this.mapAnnotationService.setupAllPlanesUpdates();
     const polyline = this.mapDataService.getPolyline();
     if (polyline) this.mapInstance?.removeOverlay(polyline);
     this.mapInstance?.setCameraDistanceAnimated(1000000, true);
+    setTimeout(() => {
+      this.draggableCard!.nativeElement.style.transform = 'unset';
+    }, 500);
   }
 
   centerMapOnUser(): Observable<boolean | undefined> {

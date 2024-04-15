@@ -9,6 +9,7 @@ import { environment } from './environments/environment';
 import { HttpClientModule } from '@angular/common/http';
 import { MapkitService } from './app/shared/services/mapkit.service';
 import { provideServiceWorker } from '@angular/service-worker';
+import 'hammerjs';
 
 export function initializeMapKit(mapkitService: MapkitService): () => Promise<void> {
   return () => mapkitService.loadMapkit();  // Returns a Promise
@@ -25,14 +26,14 @@ bootstrapApplication(AppComponent, {
     provideRouter(routes),
     importProvidersFrom(HttpClientModule),
     {
-        provide: APP_INITIALIZER,
-        useFactory: initializeMapKit,
-        deps: [MapkitService],
-        multi: true
+      provide: APP_INITIALIZER,
+      useFactory: initializeMapKit,
+      deps: [MapkitService],
+      multi: true
     },
     provideServiceWorker('ngsw-worker.js', {
-        enabled: !isDevMode(),
-        registrationStrategy: 'registerWhenStable:30000'
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
     })
-],
+  ],
 });

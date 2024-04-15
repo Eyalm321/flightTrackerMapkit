@@ -263,14 +263,15 @@ export class MapAnnotationService implements OnDestroy {
 
     this.setInterval();
     this.removeAllOtherAnnotations(annotationData.id).pipe(
-      take(1),
       tap(() => {
+        console.log('Selected annotation', annotationData);
+
         this.mapStateService.updateSelectedAnnotation(annotationData);
         this.annotationTrackView = true;
         this.mapDataService.createAircraftRoute(annotationData);
         const mapInstance = this.mapDataService?.getMapInstance();
         if (!mapInstance) return;
-        mapInstance.setCameraDistanceAnimated(100000);
+        mapInstance.setCameraDistanceAnimated(100000, true);
         const newInterval = interval(3000).pipe(
           startWith(0),
           tap(_ => {
@@ -291,28 +292,22 @@ export class MapAnnotationService implements OnDestroy {
     return Object.values(this.annotations);
   }
 
-  removeAllOtherAnnotations(id: string): Observable<void> {
-    // Map each annotation removal to an Observable, except for the one with the specified id
-    const removalObservables = Object.keys(this.annotations)
-      .filter(annoId => annoId !== id)
-      .map(annoId => {
-        return new Observable<void>(observer => {
-          this.removeAnnotation(annoId);
-          observer.next();
-          observer.complete();
-        });
-      });
 
-    // If there are no annotations to remove, immediately complete
-    if (removalObservables.length === 0) {
-      return of(undefined);
-    }
 
-    // Use forkJoin to wait for all removal Observables to complete
-    return forkJoin(removalObservables).pipe(
-      map(() => undefined), // Ensure the Observable<void> type is matched
-      take(1) // Ensure only one emission
-    );
+  removeAllOtherAnnotations(id: string): Observable<boolean> {
+    const mapInstance = this.mapDataService.getMapInstance();
+    const filter = mapInstance?.annotations.filter(anno => anno.data?.id !== id);
+    if (!mapInstance || !filter) return of(false);
+    mapInstance?.removeAnnotations(filter);
+    const annotations = mapInstance?.annotations;
+    console.log('Removed annotations', annotations);
+
+    if (!annotations) return of(false);
+    console.log('Removed annotations', mapInstance?.annotations);
+
+    this.annotations = { [id]: annotations[0] };
+    console.log('Removed annotations', this.annotations);
+    return of(true);
   }
 
   initAllAnnotationData(annotationsData: AnnotationData[]): void {

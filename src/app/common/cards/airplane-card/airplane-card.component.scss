@@ -1,14 +1,14 @@
 :host {
     display: flex;
     align-items: center;
-    transition: max-width 0.2s ease-in-out, max-height 0.2s ease-in-out, bottom ease-in-out, right ease-in-out;
+    transition: transform 0.3s;
     overflow: hidden;
     justify-self: end;
     align-self: center;
     padding-bottom: var(--ion-safe-area-bottom);
     padding-top: var(--ion-safe-area-top);
     padding-right: var(--ion-safe-area-right);
-
+    pointer-events: all;
 
 }
 
@@ -18,7 +18,7 @@
     align-items: center;
     width: 100%;
     height: 12px;
-
+    pointer-events: all;
     position: relative;
     z-index: 1000;
 

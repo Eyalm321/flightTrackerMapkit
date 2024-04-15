@@ -24,10 +24,15 @@
       <ion-icon name="navigate"></ion-icon>
     </ion-fab-button>
   </ion-fab>
-  <app-airplane-card class="card-container"
-                     [ngClass]="{'flight-view': trackView, 'portrait': trackView}"
-                     [data]="selectedAnnotationData"></app-airplane-card>
+  <div #draggableContainer
+       class="draggable-container">
+    <app-airplane-card id="cardEl"
+                       class="card-container"
+                       #cardElement
+                       [data]="selectedAnnotationData"></app-airplane-card>
+  </div>
 </div>
 <div #mapContainer
      class="map-container">
 </div>
+<!-- [ngClass]="{'flight-view': trackView, 'portrait': trackView}" -->
