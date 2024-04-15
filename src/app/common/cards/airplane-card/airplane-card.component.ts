@@ -1,9 +1,6 @@
-import { CdkDrag, DragRef, Point } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Inject, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonSpinner } from '@ionic/angular/standalone';
-import { LockDragDirectionDirective } from 'src/app/shared/directives/lock-drag-direction.directive';
-import { DirectivesModule } from 'src/app/shared/modules/directives.module';
 import { MaterialModule } from 'src/app/shared/modules/material.module';
 
 import { AirplaneDataService } from 'src/app/shared/services/airplane-data.service';

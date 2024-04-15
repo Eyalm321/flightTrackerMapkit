@@ -2,42 +2,44 @@
   <div class="card-handle-container">
     <div class="card-handle"></div>
   </div>
-  <div class="image-container">
-    <div class="spinner-container">
-      <ion-spinner *ngIf="!imageLoaded"
-                   name="dots"></ion-spinner>
-    </div>
-    <img alt="Aircraft"
-         [src]="image"
-         (load)="onImageLoad($event)"
-         class="flight-image" />
-  </div>
-  <ion-card-header class="flight-header">
-    <div class="flight-info">
-      <ion-card-title>Flight {{ data?.title }} - {{
-        data?.flightDetails?.airlineCode }}</ion-card-title>
-      <ion-card-subtitle>{{ data?.flightDetails?.callsign }}</ion-card-subtitle>
-    </div>
-    <div class="aircraft-info">
-      <ion-card-subtitle>AIRCRAFT</ion-card-subtitle>
-      <ion-card-subtitle>Model: {{ data?.aircraftDetails?.model }}</ion-card-subtitle>
-      <ion-card-subtitle>Reg.: {{ data?.aircraftDetails?.registration }}</ion-card-subtitle>
-    </div>
-  </ion-card-header>
-  <ion-card-content>
-    <div class="airport-info">
-      <div class="airport origin">
-        <h4>Origin</h4>
-        <p><strong>{{ data?.originAirport?.iata }} - {{ data?.originAirport?.name }}</strong></p>
-        <p>{{ data?.originAirport?.location }}</p>
+  <div class="content-wrapper">
+    <div class="image-container">
+      <div class="spinner-container">
+        <ion-spinner *ngIf="!imageLoaded"
+                     name="dots"></ion-spinner>
       </div>
+      <img alt="Aircraft"
+           [src]="image"
+           (load)="onImageLoad($event)"
+           class="flight-image" />
+    </div>
+    <ion-card-header class="flight-header">
+      <div class="flight-info">
+        <ion-card-title>Flight {{ data?.title }} - {{
+          data?.flightDetails?.airlineCode }}</ion-card-title>
+        <ion-card-subtitle>{{ data?.flightDetails?.callsign }}</ion-card-subtitle>
+      </div>
+      <div class="aircraft-info">
+        <ion-card-subtitle>AIRCRAFT</ion-card-subtitle>
+        <ion-card-subtitle>Model: {{ data?.aircraftDetails?.model }}</ion-card-subtitle>
+        <ion-card-subtitle>Reg.: {{ data?.aircraftDetails?.registration }}</ion-card-subtitle>
+      </div>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="airport-info">
+        <div class="airport origin">
+          <h4>Origin</h4>
+          <p><strong>{{ data?.originAirport?.iata }} - {{ data?.originAirport?.name }}</strong></p>
+          <p>{{ data?.originAirport?.location }}</p>
+        </div>
 
-      <div class="airport destination">
-        <h3>Destination</h3>
-        <p><strong>{{ data?.destinationAirport?.iata }} - {{ data?.destinationAirport?.name
-            }}</strong></p>
-        <p>{{ data?.destinationAirport?.location }}</p>
+        <div class="airport destination">
+          <h3>Destination</h3>
+          <p><strong>{{ data?.destinationAirport?.iata }} - {{ data?.destinationAirport?.name
+              }}</strong></p>
+          <p>{{ data?.destinationAirport?.location }}</p>
+        </div>
       </div>
-    </div>
-  </ion-card-content>
+    </ion-card-content>
+  </div>
 </div>

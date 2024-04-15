@@ -27,8 +27,8 @@
     .draggable-container {
         height: fit-content;
         position: absolute;
-        bottom: 0;
         width: 100%;
+        bottom: 0;
     }
 
     .my-location-button,
@@ -59,16 +59,26 @@
 
 @media (orientation: landscape) {
     .card-container {
-        transform: translateX(-100%);
+
+        transform: translateX(300%);
+        transform-origin: right;
 
         &.track-view {
             transform: translateX(0);
             max-width: 100%;
             min-width: 320px;
-            align-items: center;
+            display: flex;
+            justify-content: flex-end;
         }
     }
+
+    .draggable-container {
+        top: 0;
+        margin-top: auto;
+        margin-bottom: auto;
+    }
 }
+
 
 @media (orientation: portrait) {
     .my-location-button {
@@ -78,7 +88,7 @@
     .card-container {
         bottom: 0;
         right: auto;
-        transform: translateY(100%);
+        transform: translateY(300%);
         align-self: end;
         width: 100%;
         max-height: 45vh;

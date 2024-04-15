@@ -2,18 +2,18 @@
 
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild } from '@angular/core';
 import { AnnotationData, MapAnnotationService } from '../shared/services/map-annotation.service';
-import { IonChip } from "@ionic/angular/standalone";
 import { IonicSharedModule } from '../shared/modules/ionic-shared.module';
 import { AirplaneCardComponent } from '../common/cards/airplane-card/airplane-card.component';
 import { AirplaneStatsCardComponent } from '../common/cards/airplane-stats-card/airplane-stats-card';
 import { CommonModule } from '@angular/common';
-import { take, switchMap, ObservableInput, of, tap, last, map, Observable, Subscription, catchError, combineLatest, takeUntil, Subject } from 'rxjs';
+import { switchMap, of, tap, last, map, Observable, Subscription, takeUntil, Subject } from 'rxjs';
 import { MapDataService } from '../shared/services/map-data.service';
 import { ThemeWatcherService } from '../shared/services/theme-watcher.service';
 import { GeolocationService } from '../shared/services/geolocation.service';
 import { MapStateService } from '../shared/services/map-state.service';
 import { MapkitService } from '../shared/services/mapkit.service';
-import { DirectivesModule } from '../shared/modules/directives.module';
+import { OrientationService } from '../shared/services/orientation.service';
+import { HAMMER_GESTURE_CONFIG, HammerGestureConfig } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-map',
@@ -25,8 +25,10 @@ import { DirectivesModule } from '../shared/modules/directives.module';
     CommonModule,
     IonicSharedModule,
     AirplaneStatsCardComponent,
-    AirplaneCardComponent,
-    DirectivesModule
+    AirplaneCardComponent
+  ],
+  providers: [
+    { provide: HAMMER_GESTURE_CONFIG, useClass: HammerGestureConfig }
   ]
 })
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
@@ -52,7 +54,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     private mapAnnotationService: MapAnnotationService,
     private mapStateService: MapStateService,
     private cdr: ChangeDetectorRef,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private orientationService: OrientationService
   ) { }
 
   ngOnInit() {
@@ -101,30 +104,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.setupSubscriptions();
 
     if (this.draggableCard) {
-      console.log('draggable card', this.draggableCard.nativeElement);
-
-      this.hammer = new Hammer(this.draggableCard.nativeElement, { recognizers: [[Hammer.Swipe, { direction: Hammer.DIRECTION_DOWN }], [Hammer.Pan, { direction: Hammer.DIRECTION_DOWN }]] });
-      console.log('Hammer', this.hammer);
-      this.hammer.on('pan', (event: HammerInput) => {
-        const deltaY = event.deltaY;
-        const isDraggingDown = deltaY > 0;
-        if (isDraggingDown) {
-          console.log('Panning down', deltaY);
-          this.draggableCard!.nativeElement.style.transform = `translateY(${deltaY}px)`;
-          this.cdr.detectChanges();
-        }
-      });
-
-      this.hammer.on('panend', (event: HammerInput) => {
-        const deltaY = event.deltaY;
-        const isDraggingDown = deltaY > 0;
-        if (isDraggingDown) {
-
-          console.log('Panning ended', deltaY);
-          // Remove the code below to prevent the card from going back up
-          this.exitTrackView();
-        }
-      });
+      this.initializeHammer();
+      this.cdr.detectChanges();
     }
   }
 
@@ -132,6 +113,58 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.hammer?.destroy();
+  }
+
+  private initializeHammer(): void {
+    if (!this.draggableCard) return;
+    const orientation = this.orientationService.getCurrentOrientation();
+    const direction = this.getDirection(orientation);
+    this.hammer = new Hammer(this.draggableCard.nativeElement);
+    this.hammer.get('pan').set({ direction });
+    this.hammer.on('pan', event => this.handlePan(event, orientation));
+    this.hammer.on('panend', event => this.handlePanEnd(event, orientation));
+
+    this.orientationService.getOrientationChange()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(newOrientation => {
+        const newDirection = this.getDirection(newOrientation);
+        this.hammer?.get('pan').set({ direction: newDirection });
+        console.log('Orientation changed to:', newOrientation);
+        this.cdr.markForCheck();
+      });
+
+    console.log('Hammer initialized with orientation:', orientation);
+  }
+
+  private getDirection(orientation: string): number {
+    return orientation === 'portrait' ? Hammer.DIRECTION_DOWN : Hammer.DIRECTION_RIGHT;
+  }
+
+  private handlePan(event: HammerInput, orientation: string): void {
+    const delta = orientation === 'portrait' ? event.deltaY : event.deltaX;
+    const isPositiveDelta = delta > 0;
+
+    if (isPositiveDelta) {
+      this.setCardTransform(orientation, delta);
+      this.cdr.markForCheck();
+    }
+  }
+
+  private handlePanEnd(event: HammerInput, orientation: string): void {
+    const delta = orientation === 'portrait' ? event.deltaY : event.deltaX;
+    const isPositiveDelta = delta > 0;
+
+    if (isPositiveDelta) {
+      console.log('Pan ended at:', delta);
+      this.exitTrackView();
+    }
+  }
+
+  private setCardTransform(orientation: string, delta: number): void {
+    if (!this.draggableCard) return;
+    const transformValue = orientation === 'portrait' ? `translateY(${delta}px)` : `translateX(${delta}px)`;
+    this.renderer.setStyle(this.draggableCard.nativeElement, 'transform', transformValue);
   }
 
   private setupSubscriptions(): void {
@@ -143,15 +176,18 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapStateService.selectedAnnotation$.subscribe(annotation => {
       this.cdr.detectChanges();
       console.log('Card element', this.cardEl?.nativeElement);
+      console.log('Annotation', annotation);
+      console.log('this.trackView', this.trackView);
 
-      if (!annotation || !this.cardEl?.nativeElement) return;
+      if (!annotation) return;
+      this.trackView = true;
+      if (!this.cardEl?.nativeElement) return;
       console.log('Card element', this.cardEl?.nativeElement);
 
       this.renderer.addClass(this.cardEl?.nativeElement, 'track-view');
       this.renderer.addClass(this.cardEl?.nativeElement, 'portrait');
       console.log('Card element classList', this.cardEl?.nativeElement);
 
-      this.trackView = true;
       this.selectedAnnotationData = { ...this.selectedAnnotationData, ...annotation };
       this.mapInstance?.setCameraDistanceAnimated(300000, true);
       this.cdr.detectChanges();
@@ -213,15 +249,13 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
   exitTrackView(): void {
     this.renderer.removeClass(this.cardEl?.nativeElement, 'track-view');
-    this.trackView = false;
-    this.selectedAnnotationData = undefined;
     this.mapAnnotationService.setupAllPlanesUpdates();
     const polyline = this.mapDataService.getPolyline();
     if (polyline) this.mapInstance?.removeOverlay(polyline);
     this.mapInstance?.setCameraDistanceAnimated(1000000, true);
-    setTimeout(() => {
-      this.draggableCard!.nativeElement.style.transform = 'unset';
-    }, 500);
+    this.draggableCard!.nativeElement.style.transform = 'unset';
+    this.selectedAnnotationData = undefined;
+    this.trackView = false;
   }
 
   centerMapOnUser(): Observable<boolean | undefined> {
