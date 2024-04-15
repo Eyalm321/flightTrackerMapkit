@@ -1,5 +1,6 @@
 :host {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     transition: transform opacity 0.3s ease-in-out;
     overflow: hidden;
@@ -17,7 +18,7 @@
 }
 
 .content-wrapper {
-    padding: var(--ion-padding) 0;
+    padding: var(--ion-padding-half) 0;
 }
 
 .card-handle-container {
@@ -53,7 +54,7 @@
     background: linear-gradient(to bottom, var(--ion-color-step-100), var(--ion-color-step-50));
     background-color: var(--background);
     max-height: 75vh;
-    max-width: 600px;
+    max-width: 500px;
     border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
 
 

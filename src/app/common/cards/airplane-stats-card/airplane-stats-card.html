@@ -6,29 +6,31 @@
       <span class="value">{{selectedAnnotation?.dynamic?.last_updated ? selectedAnnotation?.dynamic?.last_updated :
         0}}s</span>
     </div>
+    <div class="info-wrapper">
+      <span class="coordinates-info"
+            *ngIf="selectedAnnotation?.coordinates">
+        Pos.: <span
+              class="value">{{selectedAnnotation?.coordinates?.lat}}°,{{selectedAnnotation?.coordinates?.lng}}°</span>
+      </span>
+      <span class="altitude-info"
+            *ngIf="selectedAnnotation && selectedAnnotation.dynamic && selectedAnnotation.dynamic.altitude">
+        Baro. Altitude: <span *ngIf="selectedAnnotation.dynamic.altitude !== 'ground'; else ground"
+              class="value">{{selectedAnnotation.dynamic.altitude}}ft</span>
+        <ng-template #ground>Ground</ng-template>
+      </span>
+      <span class="geom-rate-info"
+            *ngIf="selectedAnnotation?.dynamic?.geom_rate">
+        Vert. Rate: <span class="value">{{selectedAnnotation?.dynamic?.geom_rate}}ft/min</span>
+      </span>
+      <span class="ground-speed-info"
+            *ngIf="selectedAnnotation?.dynamic?.gs">
+        Groundspeed: <span class="value">{{selectedAnnotation?.dynamic?.gs}}kts</span>
+      </span>
+      <span class="heading-info"
+            *ngIf="selectedAnnotation?.dynamic?.heading">
+        Track: <span class="value">{{selectedAnnotation?.dynamic?.heading}}°</span>
+      </span>
+    </div>
 
-    <span class="coordinates-info"
-          *ngIf="selectedAnnotation?.coordinates">
-      Pos.: <span
-            class="value">{{selectedAnnotation?.coordinates?.lat}}°,{{selectedAnnotation?.coordinates?.lng}}°</span>
-    </span>
-    <span class="altitude-info"
-          *ngIf="selectedAnnotation && selectedAnnotation.dynamic && selectedAnnotation.dynamic.altitude">
-      Baro. Altitude: <span *ngIf="selectedAnnotation.dynamic.altitude !== 'ground'; else ground"
-            class="value">{{selectedAnnotation.dynamic.altitude}}ft</span>
-      <ng-template #ground>Ground</ng-template>
-    </span>
-    <span class="geom-rate-info"
-          *ngIf="selectedAnnotation?.dynamic?.geom_rate">
-      Vert. Rate: <span class="value">{{selectedAnnotation?.dynamic?.geom_rate}}ft/min</span>
-    </span>
-    <span class="ground-speed-info"
-          *ngIf="selectedAnnotation?.dynamic?.gs">
-      Groundspeed: <span class="value">{{selectedAnnotation?.dynamic?.gs}}kts</span>
-    </span>
-    <span class="heading-info"
-          *ngIf="selectedAnnotation?.dynamic?.heading">
-      Track: <span class="value">{{selectedAnnotation?.dynamic?.heading}}°</span>
-    </span>
   </ion-card-content>
 </ion-card>

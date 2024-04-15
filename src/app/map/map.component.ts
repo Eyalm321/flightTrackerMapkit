@@ -129,7 +129,11 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(newOrientation => {
         const newDirection = this.getDirection(newOrientation);
+        this.hammer?.off('pan');
+        this.hammer?.off('pan panend');
         this.hammer?.get('pan').set({ direction: newDirection });
+        this.hammer?.on('pan', event => this.handlePan(event, newOrientation));
+        this.hammer?.on('panend', event => this.handlePanEnd(event, newOrientation));
         console.log('Orientation changed to:', newOrientation);
         this.cdr.markForCheck();
       });
