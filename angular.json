@@ -108,6 +108,11 @@
             "assets": [
               {
                 "glob": "**/*",
+                "input": "src/app/shared/workers",
+                "output": "./shared/workers"
+              },
+              {
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
               },
