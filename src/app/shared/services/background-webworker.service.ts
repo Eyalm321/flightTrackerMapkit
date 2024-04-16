@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { App, AppState } from '@capacitor/app';
 import { BackgroundRunner } from '@capacitor/background-runner';
 
 @Injectable({
