@@ -1,5 +1,5 @@
 .menu-width {
-    --max-width: 80vw;
+    --max-width: 328px;
     --width: 100%;
 }
 
@@ -26,13 +26,20 @@
         padding: var(--ion-padding);
         text-align: center;
 
-        .radar-animation {
-            display: flex;
+
+        .animation-container {
             width: 84px;
             height: 84px;
-            margin-bottom: var(--ion-spacing-medium);
-            opacity: 0.6;
+
+            .radar-animation {
+                display: flex;
+                width: inherit;
+                height: inherit;
+                margin-bottom: var(--ion-spacing-medium);
+                opacity: 0.6;
+            }
         }
+
 
         ion-title {
             font-size: 22px;
