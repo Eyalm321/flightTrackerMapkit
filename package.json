@@ -26,6 +26,7 @@
     "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "next",
     "@capacitor/app": "next",
+    "@capacitor/background-runner": "^1.0.5",
     "@capacitor/core": "next",
     "@capacitor/geolocation": "next",
     "@capacitor/haptics": "next",

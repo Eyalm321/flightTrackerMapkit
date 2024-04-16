@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import CapacitorBackgroundRunner
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -45,4 +46,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // tracking app url opens, make sure to keep this call
         return ApplicationDelegateProxy.shared.application(application, continue: userActivity, restorationHandler: restorationHandler)
     }
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+
+    // ....
+    BackgroundRunnerPlugin.registerBackgroundTask()
+    BackgroundRunnerPlugin.handleApplicationDidFinishLaunching(launchOptions: launchOptions)
+    // ....
+
+    return true
+}
 }

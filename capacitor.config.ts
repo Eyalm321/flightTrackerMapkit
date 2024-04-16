@@ -6,6 +6,16 @@ const config: CapacitorConfig = {
   webDir: 'www/browser',
   server: {
     androidScheme: 'https'
+  },
+  plugins: {
+    BackgroundRunner: {
+      label: 'com.eyalmizrachi.flightTracker.watchlistTracker',
+      src: '../shared/workers/watchlist-tracker.worker.js',
+      event: 'track',
+      repeat: true,
+      interval: 5,
+      autoStart: false
+    }
   }
 };
 

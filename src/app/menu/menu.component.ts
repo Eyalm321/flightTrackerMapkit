@@ -43,7 +43,7 @@ export class MenuComponent implements OnInit {
     this.watchListService.watchList$.subscribe((watchList: Flight[]) => {
       this.watchList = watchList;
       this.localNotificationsService.displayLocalNotification({
-        title: `${watchList[0].flight} Added`, body: 'You will get a notification when the flight status changes',
+        title: `Flight ${watchList[0].flight} Added`, body: 'You will get a notification when the flight status changes',
         id: watchList[0].flight,
         data: undefined
       });
