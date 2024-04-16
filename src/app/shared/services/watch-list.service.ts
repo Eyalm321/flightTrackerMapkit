@@ -21,7 +21,7 @@ export class WatchListService {
   updateWatchList(annotationData: AnnotationData): void {
     const watchDetails = this.mapWatchDetailsFromAnnotationData(annotationData);
     const updatedWatchList = this.watchListSubject.value;
-    updatedWatchList.push(watchDetails);
+    updatedWatchList.unshift(watchDetails);
     this.watchListSubject.next(updatedWatchList);
   }
 
