@@ -15,9 +15,10 @@
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+  <ion-progress-bar [ngStyle]="{ 'visibility': isLoading ? 'visible' : 'hidden' }"
+                    type="indeterminate"></ion-progress-bar>
 </ion-header>
-<ion-progress-bar [ngStyle]="{ 'visibility': isLoading ? 'visible' : 'hidden' }"
-                  type="indeterminate"></ion-progress-bar>
+
 <ion-content [fullscreen]="true">
   <div class="content-wrapper">
     <app-map [trackView]="trackView"

@@ -10,6 +10,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { MapkitService } from './app/shared/services/mapkit.service';
 import { provideServiceWorker } from '@angular/service-worker';
 import 'hammerjs';
+import { provideLottieOptions } from 'ngx-lottie';
+import player from 'lottie-web';
 
 export function initializeMapKit(mapkitService: MapkitService): () => Promise<void> {
   return () => mapkitService.loadMapkit();  // Returns a Promise
@@ -34,6 +36,9 @@ bootstrapApplication(AppComponent, {
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000'
-    })
+    }),
+    provideLottieOptions({
+      player: () => import('lottie-web'),
+    }),
   ],
 });

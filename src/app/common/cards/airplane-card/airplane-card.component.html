@@ -4,6 +4,13 @@
   </div>
   <div class="content-wrapper">
     <div class="image-container">
+      <ion-button class="add-to-watchlist-button"
+                  (click)="addToWatchlist(data)">
+        <div class="button-container">
+          <span>Watchlist</span>
+          <ion-icon name="add"></ion-icon>
+        </div>
+      </ion-button>
       <div class="spinner-container">
         <ion-spinner *ngIf="!imageLoaded"
                      name="dots"></ion-spinner>

@@ -1,8 +1,9 @@
-<ion-menu [contentId]="contentId">
+<ion-menu [contentId]="contentId"
+          class="menu-width">
   <ion-header>
     <ion-toolbar>
       <ion-buttons slot="start">
-        <ion-title>Menu Content</ion-title>
+        <ion-title>Menu</ion-title>
       </ion-buttons>
       <ion-buttons slot="end">
         <ion-button class="github-button"
@@ -15,14 +16,39 @@
 
 
   <ion-content class="ion-padding">
-    <ion-list>
-      <ion-list-header>
-        <ion-label class="ion-text-center">Watch List</ion-label>
-      </ion-list-header>
-      <ion-item *ngFor="let flight of flights">
-        <ion-label>{{ flight.flight }} - {{ flight.origin }} -> {{ flight.destination }} ({{ flight.status
-          }})</ion-label>
-      </ion-item>
+    <ion-list class="watchlist-container">
+      <div class="empty-watch-list"
+           *ngIf="watchList.length === 0 else tableHeader">
+        <ng-lottie [options]="lottieOptions"
+                   class="radar-animation"></ng-lottie>
+        <ion-title class="ion-text-center">Your watchlist is empty.</ion-title>
+        <span>Select a flight from the map to add it.</span>
+      </div>
+      <ng-template #tableHeader>
+        <ion-grid class="watchlist-grid">
+          <ion-row>
+            <ion-col size="12">
+              <ion-title class="watchlist-title">Watchlist</ion-title>
+            </ion-col>
+          </ion-row>
+          <ion-row class="watchlist-grid-header">
+            <ion-col size=".5"></ion-col>
+            <ion-col size="2.5"><strong>Flight</strong></ion-col>
+            <ion-col size="2.5"><strong>Origin</strong></ion-col>
+            <ion-col size="2.5"><strong>Dest.</strong></ion-col>
+            <ion-col size="2.5"><strong>Status</strong></ion-col>
+          </ion-row>
+          <ion-row *ngFor="let flight of watchList"
+                   style="font-size: 13px;">
+            <ion-col size=".5"
+                     class="seen-bar"></ion-col>
+            <ion-col size="2.5">{{ flight.flight }}</ion-col>
+            <ion-col size="2.5">{{ flight.origin }}</ion-col>
+            <ion-col size="2.5">{{ flight.destination }}</ion-col>
+            <ion-col size="2.5">{{ flight.status }}</ion-col>
+          </ion-row>
+        </ion-grid>
+      </ng-template>
     </ion-list>
   </ion-content>
 </ion-menu>

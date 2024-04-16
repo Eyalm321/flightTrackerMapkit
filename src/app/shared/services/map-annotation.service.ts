@@ -5,21 +5,54 @@ import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
 
-interface LatLng {
+export interface LatLng {
   lat: number;
   lng: number;
 }
 export interface AnnotationData {
   id?: string;
   title?: string;
-  coordinates?: { lat: number, lng: number; };
-  flightDetails?: { callsign?: string, airlineCode?: string; };
-  aircraftDetails?: { registration?: string, icao24?: string; model?: string; };
-  originAirport?: { iata?: string, name?: string, location?: string, lat?: number, lng?: number; };
-  destinationAirport?: { iata?: string, name?: string, location?: string, lat?: number, lng?: number; };
-  dynamic?: { last_updated?: number, gs?: number, geom_rate?: number, rssi?: number, altitude?: number | string, heading?: number; };
-  last_pos?: { lat?: number, lng?: number; };
+  coordinates?: LatLng;
+  flightDetails?: FlightDetails;
+  aircraftDetails?: AircraftDetails;
+  originAirport?: Airport;
+  destinationAirport?: Airport;
+  dynamic?: DynamicData;
+  last_pos?: LatLng;
   waypoints?: LatLng[];
+}
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+export interface FlightDetails {
+  callsign?: string;
+  airlineCode?: string;
+}
+
+export interface AircraftDetails {
+  registration?: string;
+  icao24?: string;
+  model?: string;
+}
+
+export interface Airport {
+  iata?: string;
+  name?: string;
+  location?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export interface DynamicData {
+  last_updated?: number;
+  gs?: number;
+  geom_rate?: number;
+  rssi?: number;
+  altitude?: number | string;
+  heading?: number;
 }
 
 @Injectable({
@@ -269,7 +302,9 @@ export class MapAnnotationService implements OnDestroy {
     return Object.values(this.annotations);
   }
 
-
+  getAnnotationById(id: string): mapkit.Annotation | undefined {
+    return this.annotations[id];
+  }
 
   removeAllOtherAnnotations(id: string): Observable<boolean> {
     const mapInstance = this.mapDataService.getMapInstance();
@@ -392,19 +427,19 @@ export class MapAnnotationService implements OnDestroy {
       const elapsedTime = time - startTime;
       const fraction = elapsedTime / duration;
       const index = Math.floor(fraction * (waypoints.length - 1));
-      if (!newAnnotationData || !newAnnotationData.id || !newAnnotationData.coordinates) return;
-      if (fraction < 1) {
+      if (newAnnotationData && newAnnotationData.id && this.annotations[newAnnotationData.id] && fraction < 1) {
         this.annotations[newAnnotationData.id].coordinate = waypoints[index];
         requestAnimationFrame(updatePosition);
-      } else {
-
+      } else if (newAnnotationData && newAnnotationData.id && this.annotations[newAnnotationData.id]) {
         this.annotations[newAnnotationData.id].coordinate = waypoints[waypoints.length - 1];
       }
       // Update the line less frequently or based on significant changes
       changePathMiddleWaypoints([waypoints[0], waypoints[index], waypoints[waypoints.length - 1]]);
     };
 
-    requestAnimationFrame(updatePosition);
+    if (newAnnotationData && newAnnotationData.id && this.annotations[newAnnotationData.id]) {
+      requestAnimationFrame(updatePosition);
+    }
   }
 
   calculateWaypoints(startLat: number, startLng: number, endLat: number, endLng: number, interval: number): LatLng[] {

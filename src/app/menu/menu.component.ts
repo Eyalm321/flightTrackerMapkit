@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { IonicSharedModule } from '../shared/modules/ionic-shared.module';
-import { IonList, IonItem, IonListHeader } from "@ionic/angular/standalone";
+import { IonList, IonItem, IonListHeader, IonRow, IonCol } from "@ionic/angular/standalone";
+import { AnnotationData } from '../shared/services/map-annotation.service';
+import { WatchListService } from '../shared/services/watch-list.service';
+import { AnimationOptions, LottieComponent } from 'ngx-lottie';
+import { AnimationItem } from 'lottie-web';
 
 export interface Flight {
-  id: string;
   flight: string;
   origin: string;
   destination: string;
@@ -17,55 +20,36 @@ export interface Flight {
   styleUrls: ['./menu.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IonListHeader, IonItem, IonList,
+  imports: [IonCol, IonRow, IonListHeader, IonItem, IonList,
     CommonModule,
     IonicSharedModule,
+    LottieComponent,
   ],
 })
-export class MenuComponent {
+export class MenuComponent implements OnInit {
   @Input() contentId?: string;
-  flights?: Flight[] = [
-    {
-      id: '1',
-      flight: 'AA123',
-      origin: 'New York',
-      destination: 'Los Angeles',
-      status: 'On Time',
-    },
-    {
-      id: '2',
-      flight: 'DL456',
-      origin: 'Chicago',
-      destination: 'Miami',
-      status: 'Delayed',
-    },
-    {
-      id: '3',
-      flight: 'UA789',
-      origin: 'San Francisco',
-      destination: 'Seattle',
-      status: 'Cancelled',
-    },
-    {
-      id: '4',
-      flight: 'BA234',
-      origin: 'London',
-      destination: 'Paris',
-      status: 'On Time',
-    },
-    {
-      id: '5',
-      flight: 'LH567',
-      origin: 'Berlin',
-      destination: 'Rome',
-      status: 'On Time',
-    },
-  ];
+  watchList: Flight[] = [];
 
-  constructor() { }
+  lottieOptions: AnimationOptions;
+
+  constructor(private watchListService: WatchListService, private cdr: ChangeDetectorRef) {
+    this.lottieOptions = {
+      path: '/assets/animations/lottie/radar.json',
+    };
+  }
+
+  ngOnInit(): void {
+    this.watchListService.watchList$.subscribe((watchList: Flight[]) => {
+      this.watchList = watchList;
+      this.cdr.detectChanges();
+    });
+  }
 
   navigateToGithub(): void {
     window.open('https://github.com/Eyalm321/flightTrackerMapkit', '_blank');
   }
 
+  animationCreated(animationItem: AnimationItem): void {
+    console.log(animationItem);
+  }
 }

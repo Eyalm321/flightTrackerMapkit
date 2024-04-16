@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonChip, IonFab, IonFabButton, IonIcon, IonProgressBar, IonButtons, IonButton, IonMenu, IonMenuButton, IonMenuToggle, IonList, IonLabel } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonChip, IonFab, IonFabButton, IonIcon, IonProgressBar, IonButtons, IonButton, IonMenu, IonMenuButton, IonMenuToggle, IonGrid, IonList, IonLabel } from '@ionic/angular/standalone';
 
 
 @NgModule({
@@ -22,7 +22,8 @@ import { IonContent, IonHeader, IonTitle, IonToolbar, IonChip, IonFab, IonFabBut
     IonMenuButton,
     IonMenuToggle,
     IonList,
-    IonLabel
+    IonLabel,
+    IonGrid
   ],
   exports: [
     IonContent,
@@ -40,7 +41,8 @@ import { IonContent, IonHeader, IonTitle, IonToolbar, IonChip, IonFab, IonFabBut
     IonMenuButton,
     IonMenuToggle,
     IonList,
-    IonLabel
+    IonLabel,
+    IonGrid
   ]
 })
 export class IonicSharedModule { }

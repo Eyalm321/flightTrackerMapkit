@@ -55,6 +55,7 @@
     background-color: var(--background);
     max-height: 75vh;
     max-width: 500px;
+    padding: 0 var(--ion-padding-half);
     border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
 
 
@@ -79,7 +80,6 @@
         display: flex;
         overflow: hidden;
         position: relative;
-        padding: 0 var(--ion-padding-half);
 
         .flight-image {
             width: inherit;
@@ -125,6 +125,51 @@
 
 }
 
+.add-to-watchlist-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    max-width: fit-content;
+    width: 100%;
+    --background: rgb(var(--ion-color-secondary-rgb), 0.95);
+    --border-radius: var(--ion-border-radius-medium);
+    --padding-bottom: 0;
+    --padding-end: var(--ion-padding-half);
+    --padding-top: 0;
+    --padding-start: var(--ion-padding-half);
+    text-transform: capitalize;
+    --color: var(--ion-color-secondary);
+    min-height: auto;
+    --box-shadow: none;
+    --color: var(--ion-color-secondary-contrast);
+    margin: var(--ion-spacing-small);
+
+    .button-container {
+        display: flex;
+        align-items: center;
+        gap: var(--ion-spacing-small);
+
+    }
+
+    ion-icon {
+        padding: var(--ion-padding-half) 0 var(--ion-padding-half) var(--ion-padding-half);
+    }
+}
+
+.divider {
+    &.vertical {
+        width: 1px;
+        height: 100%;
+        background-color: var(--ion-color-medium);
+    }
+
+    &.horizontal {
+        width: 100%;
+        height: 1px;
+        background-color: var(--ion-color-medium);
+    }
+}
+
 @media (orientation: landscape) {
     :host {
         max-width: 450px;
@@ -138,6 +183,7 @@
         width: 12px;
         height: auto;
         justify-content: unset;
+        padding-right: var(--ion-padding-half);
 
         .card-handle {
             width: 2px;
@@ -148,6 +194,7 @@
 
     .flight-card {
         border-radius: var(--ion-border-radius-medium) 0 0 var(--ion-border-radius-medium);
+        padding: 0 var(--ion-padding-half) 0 0;
     }
 }
 
