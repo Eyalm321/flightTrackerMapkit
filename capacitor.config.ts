@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   plugins: {
     BackgroundRunner: {
       label: 'com.eyalmizrachi.flightTracker.watchlistTracker',
-      src: 'src/app/shared/workers/watchlist-tracker.worker.js',
+      src: './src/app/shared/workers/watchlist-tracker.worker.js',
       event: 'track',
       repeat: false,
       interval: 0,
