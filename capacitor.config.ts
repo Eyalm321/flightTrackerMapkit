@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
+  appId: 'com.eyalmizrachi.flightTrackerMapKit',
   appName: 'flightTrackerMapkit',
   webDir: 'www/browser',
   server: {
@@ -12,8 +12,8 @@ const config: CapacitorConfig = {
       label: 'com.eyalmizrachi.flightTracker.watchlistTracker',
       src: '../shared/workers/watchlist-tracker.worker.js',
       event: 'track',
-      repeat: true,
-      interval: 5,
+      repeat: false,
+      interval: 0,
       autoStart: false
     }
   }

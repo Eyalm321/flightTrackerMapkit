@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { AnnotationData, MapAnnotationService } from './map-annotation.service';
+import { App, AppState } from '@capacitor/app';
+import { BackgroundRunner } from '@capacitor/background-runner';
+import { BackgroundWebworkerService } from './background-webworker.service';
 
 interface WatchDetails {
   flight: string;
@@ -16,14 +19,28 @@ export class WatchListService {
   private watchListSubject: BehaviorSubject<WatchDetails[]> = new BehaviorSubject<WatchDetails[]>([]);
   watchList$ = this.watchListSubject.asObservable();
 
-  constructor() { }
+  constructor(private backgroundWebworkerService: BackgroundWebworkerService) { }
+
+  private trackProperties?: { [key: string]: string; }[];
+
+  initListenToAppBackgroundState(): void {
+    App.addListener('appStateChange', async (state: AppState) => {
+      if (!state.isActive) {
+        this.startBackgroundTask();
+      }
+    });
+  }
 
   updateWatchList(annotationData: AnnotationData): void {
     const watchDetails = this.mapWatchDetailsFromAnnotationData(annotationData);
     const updatedWatchList = this.watchListSubject.value;
     updatedWatchList.unshift(watchDetails);
+
+    this.trackProperties = updatedWatchList.map(watch => {
+      return { [watch.flight]: watch.status };
+    });
     this.watchListSubject.next(updatedWatchList);
-  }
+  };
 
   private mapWatchDetailsFromAnnotationData(annotationData: AnnotationData): WatchDetails {
     return {
@@ -44,5 +61,15 @@ export class WatchListService {
       if (altitude > 10000) return 'Cruising';
     }
     return 'Unknown';
+  }
+
+  getTrackProperties(): { [key: string]: string; }[] {
+    return this.trackProperties || [];
+  }
+
+  startBackgroundTask(): void {
+    console.log('Starting background task');
+
+    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', this.getTrackProperties());
   }
 }

@@ -1,74 +1,62 @@
-import * as runner from '@capacitor/background-runner';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import CapacitorKV from '@capacitor/kv-storage';
 
 const trackFlightsInBackground = async () => {
-    const taskId = await runner.run({
-        startTracking: async () => {
-            let flights = JSON.parse(await CapacitorKV.get('watchlist') || '[]');
-            if (flights.length > 0) {
-                let activeFlights = false; // Track if any flights still need monitoring
+    let activeFlights = true;  // Assume there are active flights initially
 
-                flights.forEach(async id => {
-                    try {
-                        const baseUrl = 'https://api.adsb.lol';
-                        const response = await fetch(`${baseUrl}/v2/icao/${id}`);
-                        const data = await response.json();
+    const interval = setInterval(async () => {
+        const flights = JSON.parse(await CapacitorKV.get('watchlist') || '[]');
+        if (flights.length > 0 && activeFlights) {
+            activeFlights = false;  // Reset for each interval execution
+            for (const id of flights) {
+                try {
+                    const baseUrl = 'https://api.adsb.lol';
+                    const response = await fetch(`${baseUrl}/v2/icao/${id}`);
+                    const data = await response.json();
 
-                        if (data.ac && data.ac.length > 0) {
-                            const currentAltitude = data.ac[0].alt_baro;
-                            const currentStatus = mapAltitudeToStatus(currentAltitude);
-                            const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
-                            const storedStatus = storedData.status;
+                    if (data.ac && data.ac.length > 0) {
+                        const currentAltitude = data.ac[0].alt_baro;
+                        const currentStatus = mapAltitudeToStatus(currentAltitude);
+                        const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
+                        const storedStatus = storedData.status;
 
-                            // Update the stored data
-                            await storeData(`flight_${id}`, JSON.stringify({
-                                status: currentStatus,
-                                altitude: currentAltitude
-                            }));
+                        await storeData(`flight_${id}`, JSON.stringify({
+                            status: currentStatus,
+                            altitude: currentAltitude
+                        }));
 
-                            // Check for status change
-                            if (currentStatus !== storedStatus) {
-                                await LocalNotifications.schedule({
-                                    notifications: [
-                                        {
-                                            title: 'Flight Status Change',
-                                            body: `Flight ${id} is now ${currentStatus}`,
-                                            id: id,
-                                            schedule: { at: new Date(Date.now() + 1000) },
-                                        }
-                                    ]
-                                });
-                            }
-
-                            // Determine if the flight still needs monitoring
-                            if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
-                                activeFlights = true;
-                            }
+                        if (currentStatus !== storedStatus) {
+                            await LocalNotifications.schedule({
+                                notifications: [
+                                    {
+                                        title: 'Flight Status Change',
+                                        body: `Flight ${id} is now ${currentStatus}`,
+                                        id: id,
+                                        schedule: { at: new Date(Date.now() + 1000) },
+                                    }
+                                ]
+                            });
                         }
-                    } catch (error) {
-                        console.error('Error fetching flight data:', error);
+
+                        if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
+                            activeFlights = true;
+                        }
                     }
-                });
-
-                // Stop the background task if no active flights
-                if (!activeFlights) {
-                    runner.stop(taskId);
-                    console.log('All flights are landed or data not available. Stopping background tracking.');
+                } catch (error) {
+                    console.error('Error fetching flight data:', error);
                 }
-            } else {
-                // No flights in the watchlist
-                runner.stop(taskId);
-                console.log('No flights to track. Stopping background tracking.');
             }
-        },
-        stop: () => {
-            console.log('Background tracking stopped');
-        }
-    });
 
-    return taskId;
+            if (!activeFlights) {
+                clearInterval(interval);
+                console.log('All flights are landed or data not available. Stopping background tracking.');
+            }
+        } else {
+            clearInterval(interval);
+            console.log('No flights to track. Stopping background tracking.');
+        }
+    }, 900000); // Check every 15 minutes
 };
+
 
 const storeData = async (key, value) => {
     try {
@@ -91,18 +79,17 @@ const mapAltitudeToStatus = (altitude) => {
 
 addEventListener('startTracking', async (resolve, reject, args) => {
     try {
-        const hasData = !!args && Array.isArray(args.trackIds) && args.tracklist.length > 0;
-        if (hasData) {
-            for (flight of tracklist) {
+        const tracklist = args?.trackIds || [];
+        if (tracklist.length > 0) {
+            for (const flight of tracklist) {
                 const key = flight.id;
                 const value = JSON.stringify({
                     status: flight.status,
                     altitude: flight.altitude
                 });
+                await storeData(key, value);
             }
-            storeData(key, value).then(() => {
-                trackFlightsInBackground();
-            });
+            await trackFlightsInBackground();
         }
         console.log('Tracking initiated.');
     } catch (error) {
