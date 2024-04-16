@@ -4,6 +4,7 @@ import { take, of, Observable, switchMap, tap, BehaviorSubject, interval, startW
 import { MapStateService } from './map-state.service';
 import { AdsbService, Aircraft } from './adsb.service';
 import { AirplaneDataService } from './airplane-data.service';
+import { AppStateService } from './app-state.service';
 
 export interface LatLng {
   lat: number;
@@ -87,7 +88,13 @@ export class MapAnnotationService implements OnDestroy {
     private mapStateService: MapStateService,
     private adsbService: AdsbService,
     private airplaneDataService: AirplaneDataService,
+    private appStateService: AppStateService
   ) {
+    this.appStateService.appStateChanges$.subscribe((isActive: boolean) => {
+      if (!isActive) {
+        this.setInterval();
+      }
+    });
 
     this.mapStateService.selectedAnnotation$.subscribe(annotation => {
       if (!annotation) return;

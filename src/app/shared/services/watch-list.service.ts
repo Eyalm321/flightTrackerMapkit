@@ -4,6 +4,7 @@ import { AnnotationData, MapAnnotationService } from './map-annotation.service';
 import { App, AppState } from '@capacitor/app';
 import { BackgroundRunner } from '@capacitor/background-runner';
 import { BackgroundWebworkerService } from './background-webworker.service';
+import { AppStateService } from './app-state.service';
 
 interface WatchDetails {
   flight: string;
@@ -19,17 +20,15 @@ export class WatchListService {
   private watchListSubject: BehaviorSubject<WatchDetails[]> = new BehaviorSubject<WatchDetails[]>([]);
   watchList$ = this.watchListSubject.asObservable();
 
-  constructor(private backgroundWebworkerService: BackgroundWebworkerService) { }
-
-  private trackProperties?: { [key: string]: string; }[];
-
-  initListenToAppBackgroundState(): void {
-    App.addListener('appStateChange', async (state: AppState) => {
-      if (!state.isActive) {
+  constructor(private backgroundWebworkerService: BackgroundWebworkerService, private appStateService: AppStateService) {
+    appStateService.appStateChanges$.subscribe((isActive: boolean) => {
+      if (!isActive) {
         this.startBackgroundTask();
       }
     });
   }
+
+  private trackProperties?: { [key: string]: string; }[];
 
   updateWatchList(annotationData: AnnotationData): void {
     const watchDetails = this.mapWatchDetailsFromAnnotationData(annotationData);

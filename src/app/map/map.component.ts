@@ -14,6 +14,7 @@ import { MapStateService } from '../shared/services/map-state.service';
 import { MapkitService } from '../shared/services/mapkit.service';
 import { OrientationService } from '../shared/services/orientation.service';
 import { HAMMER_GESTURE_CONFIG, HammerGestureConfig } from '@angular/platform-browser';
+import { AppStateService } from '../shared/services/app-state.service';
 
 @Component({
   selector: 'app-map',
@@ -55,10 +56,20 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     private mapStateService: MapStateService,
     private cdr: ChangeDetectorRef,
     private renderer: Renderer2,
-    private orientationService: OrientationService
+    private orientationService: OrientationService,
+    private appStateService: AppStateService
   ) { }
 
   ngOnInit() {
+    this.appStateService.appStateChanges$.pipe(
+      takeUntil(this.destroy$),
+      tap(isActive => {
+        if (isActive && !this.updateAnnotationsInterval) {
+          this.mapAnnotationService.setupAllPlanesUpdates();
+        }
+      })
+    ).subscribe();
+
     this.mapkitService.getMapkit().pipe(
       takeUntil(this.destroy$),
       switchMap(() => this.geolocationService.getCurrentPosition()),
@@ -98,7 +109,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     ).subscribe((instance) => {
       const annotations = this.mapAnnotationService.getAnnotations();
       instance.addAnnotations(annotations);
-      this.mapAnnotationService.setupAllPlanesUpdates();
+      if (!this.updateAnnotationsInterval) {
+        this.mapAnnotationService.setupAllPlanesUpdates();
+      }
     });
 
     this.setupSubscriptions();
@@ -198,8 +211,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.mapAnnotationService.updateAnnotationsInterval$.subscribe(interval => {
-      console.log('Update interval', interval);
-      console.log('this.updateAnnotationsInterval', this.updateAnnotationsInterval);
       this.cdr.detectChanges();
       if (this.updateAnnotationsInterval) this.updateAnnotationsInterval.unsubscribe();
       this.updateAnnotationsInterval = undefined;
