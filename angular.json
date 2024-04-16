@@ -28,6 +28,11 @@
             "assets": [
               {
                 "glob": "**/*",
+                "input": "src/app/shared/workers",
+                "output": "./shared/workers"
+              },
+              {
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
               },
@@ -106,11 +111,6 @@
             "karmaConfig": "karma.conf.js",
             "inlineStyleLanguage": "scss",
             "assets": [
-              {
-                "glob": "**/*",
-                "input": "src/app/shared/workers",
-                "output": "./shared/workers"
-              },
               {
                 "glob": "**/*",
                 "input": "src/assets",
