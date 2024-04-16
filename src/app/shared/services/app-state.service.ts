@@ -9,10 +9,14 @@ export class AppStateService {
   private appStateChangesSubject: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   appStateChanges$: Observable<boolean> = this.appStateChangesSubject.asObservable();
 
-  constructor() { }
+  constructor() {
+    this.initializeAppStateListener();
+  }
 
   private initializeAppStateListener(): void {
     App.addListener('appStateChange', async (state) => {
+      console.log('App state changed. Is active?', state.isActive);
+
       this.appStateChangesSubject.next(state.isActive);
     });
   }
