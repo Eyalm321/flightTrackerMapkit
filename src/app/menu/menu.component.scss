@@ -22,7 +22,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: var(--ion-spacing-medium);
+        gap: var(--ion-spacing-small);
         padding: var(--ion-padding);
         text-align: center;
 
@@ -35,7 +35,6 @@
                 display: flex;
                 width: inherit;
                 height: inherit;
-                margin-bottom: var(--ion-spacing-medium);
                 opacity: 0.6;
             }
         }
