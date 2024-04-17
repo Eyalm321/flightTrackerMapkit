@@ -21,7 +21,7 @@ const trackFlightsInBackground = async () => {
                             status: currentStatus,
                             altitude: currentAltitude
                         }));
-
+                        console.log('Flight updated:', id, currentStatus, currentAltitude);
                         if (currentStatus !== storedStatus) {
                             let scheduleDate = new Date();
                             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
