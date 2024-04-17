@@ -9,13 +9,9 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
         let flightsData = await CapacitorKV.get('flight_ids').value || "0";
         let numIds = parseInt(flightsData.split(',')[0]) || 0; // Extract number of IDs
         const flights = [];
-        for (let i = 0; i < numIds; i++) {
-            const start = flightsData.indexOf(',') + 1;
-            const end = flightsData.indexOf(',', start);
-            const id = flightsData.substring(start, end === -1 ? flightsData.length : end);
-            flights.push(id);
-            flightsData = flightsData.slice(end + 1);
-        }
+        flights.push('bar');
+        flights.push('foo');
+        flights.push('baz');
         console.log(`Checking ${flights.length} flights`);
         console.log(`Flight IDs: ${JSON.stringify(flights)}`);
         if (flights.length > 0 && activeFlights) {
