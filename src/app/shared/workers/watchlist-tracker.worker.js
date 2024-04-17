@@ -98,6 +98,7 @@ const mapAltitudeToStatus = (altitude) => {
 
 addEventListener('startTracking', async (resolve, reject, args) => {
     try {
+        console.log('Received startTracking event with args:', args);
         const trackIds = Object.keys(args);
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
