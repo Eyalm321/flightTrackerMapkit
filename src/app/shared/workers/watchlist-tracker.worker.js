@@ -1,11 +1,15 @@
 const trackFlightsInBackground = async () => {
     let activeFlights = true;  // Assume there are active flights initially
+    console.log('Tracking service started, checking for active flights');
 
     const interval = setInterval(async () => {
         const flights = JSON.parse(await CapacitorKV.get('watchlist') || '[]');
+        console.log(`Checking ${flights.length} flights for updates`);
+
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;  // Reset for each interval execution
             for (const id of flights) {
+                console.log(`Fetching data for flight ID: ${id}`);
                 try {
                     const baseUrl = 'https://api.adsb.lol';
                     const response = await fetch(`${baseUrl}/v2/icao/${id}`);
@@ -13,6 +17,7 @@ const trackFlightsInBackground = async () => {
 
                     if (data.ac && data.ac.length > 0) {
                         const currentAltitude = data.ac[0].alt_baro;
+                        console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
                         const currentStatus = mapAltitudeToStatus(currentAltitude);
                         const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
                         const storedStatus = storedData.status;
@@ -22,7 +27,9 @@ const trackFlightsInBackground = async () => {
                             altitude: currentAltitude
                         }));
                         console.log('Flight updated:', id, currentStatus, currentAltitude);
+
                         if (currentStatus !== storedStatus) {
+                            console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
                             let scheduleDate = new Date();
                             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
 
@@ -43,7 +50,7 @@ const trackFlightsInBackground = async () => {
                         }
                     }
                 } catch (error) {
-                    console.error('Error fetching flight data:', error);
+                    console.error('Error fetching flight data for flight ID', id, ':', error);
                 }
             }
 
@@ -55,15 +62,15 @@ const trackFlightsInBackground = async () => {
             clearInterval(interval);
             console.log('No flights to track. Stopping background tracking.');
         }
-    }, 60000); // Check every 15 minutes
+    }, 60000); // Check every 60 seconds
 };
-
 
 const storeData = async (key, value) => {
     try {
         await CapacitorKV.set(key, value);
+        console.log(`Data stored for ${key}`);
     } catch (error) {
-        console.error('Failed to save data:', error);
+        console.error('Failed to save data:', key, error);
     }
 };
 
@@ -77,13 +84,13 @@ const mapAltitudeToStatus = (altitude) => {
     return 'Unknown';
 };
 
-
 addEventListener('startTracking', async (resolve, reject, args) => {
     try {
         const tracklist = args?.trackIds || [];
+        console.log(`Start tracking called with ${tracklist.length} flights`);
         if (tracklist.length > 0) {
             for (const flight of tracklist) {
-                const key = flight.id;
+                const key = `flight_${flight.id}`;
                 const value = JSON.stringify({
                     status: flight.status,
                     altitude: flight.altitude
@@ -94,19 +101,6 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         }
         console.log('Tracking initiated.');
     } catch (error) {
-        console.error('Failed:', error);
+        console.error('Failed to initiate tracking:', error);
     }
 });
-
-
-
-// example response
-// {"ac":[
-// { "hex": "a13854", "type": "adsb_icao", "flight": "EJA178  ", "r": "N178QS", "t": "GL7T", "alt_baro": 47000, "alt_geom": 48300, "gs": 406.1, "ias": 223, "tas": 488, "mach": 0.856, "track": 248.17, "track_rate": 0.00, "roll": -0.18, "mag_heading": 250.49, "true_heading": 250.24, "baro_rate": 64, "geom_rate": 0, "squawk": "1602", "emergency": "none", "category": "A3", "nav_qnh": 1012.8, "nav_altitude_mcp": 47008, "nav_heading": 253.12, "lat": 34.628720, "lon": -92.327900, "nic": 8, "rc": 186, "seen_pos": 0.475, "version": 2, "nic_baro": 1, "nac_p": 10, "nac_v": 1, "sil": 3, "sil_type": "perhour", "gva": 2, "sda": 2, "alert": 0, "spi": 0, "mlat": [], "tisb": [], "messages": 82829, "seen": 0.5, "rssi": -30.0; }
-// ]
-// , "msg": "No error"
-//     , "now": 1713301060425
-//         , "total": 1
-//             , "ctime": 1713301060425
-//                 , "ptime": 0
-// }
