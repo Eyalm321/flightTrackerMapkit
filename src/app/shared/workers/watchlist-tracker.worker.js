@@ -127,6 +127,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         const trackIds = Object.keys(args);
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
+            CapacitorKV.set('flight_ids', '');
             for (const id of trackIds) {
                 const key = `flight_${id}`;
                 const value = JSON.stringify(args[id]);
