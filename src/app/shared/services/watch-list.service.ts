@@ -25,20 +25,19 @@ export class WatchListService {
       if (!isActive) {
         this.startBackgroundTask();
       }
-      this.startBackgroundTask();
     });
   }
 
-  private trackProperties?: { [key: string]: string; }[];
+  private trackProperties?: { [key: string]: string; };
 
   updateWatchList(annotationData: AnnotationData): void {
     const watchDetails = this.mapWatchDetailsFromAnnotationData(annotationData);
     const updatedWatchList = this.watchListSubject.value;
     updatedWatchList.unshift(watchDetails);
 
-    this.trackProperties = updatedWatchList.map(watch => {
-      return { [watch.flight]: watch.status };
-    });
+    this.trackProperties = updatedWatchList.reduce((acc, watch) => {
+      return { ...acc, [watch.flight]: watch.status };
+    }, {});
 
     this.watchListSubject.next(updatedWatchList);
   };
@@ -64,16 +63,16 @@ export class WatchListService {
     return 'Unknown';
   }
 
-  getTrackProperties(): { [key: string]: string; }[] {
+  getTrackProperties(): { [key: string]: string; } {
     console.log('Getting track properties', this.trackProperties);
 
-    return this.trackProperties || [];
+    return this.trackProperties || {};
   }
 
   startBackgroundTask(): void {
     console.log('Starting background task');
 
-    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', [{ 'foo': 'bar' }]);
+    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', this.getTrackProperties());
   }
 }
 
