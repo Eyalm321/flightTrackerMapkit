@@ -16,7 +16,7 @@ export class BackgroundWebworkerService {
       await BackgroundRunner.dispatchEvent({
         label: workerId,
         event: eventName,
-        details: [{ 'foo': 'bar' }]
+        details: { 'foo': 'bar' }
       });
 
       this.tasks.set(eventName, { workerId });
