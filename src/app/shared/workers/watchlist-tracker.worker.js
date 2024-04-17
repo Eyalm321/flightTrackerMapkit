@@ -88,12 +88,17 @@ const storeData = async (key, value) => {
         await CapacitorKV.set(key, value);
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
+
         if (key.startsWith('flight_')) {
-            let existingIdsData = await CapacitorKV.get('flight_ids').value || "0"; // Get existing data or initialize as "0"
-            let numIds = parseInt(existingIdsData.split(',')[0]) || 0; // Extract number of existing IDs
-            numIds++; // Increment count for the new ID
-            existingIdsData = `${numIds},${existingIdsData.slice(existingIdsData.indexOf(',') + 1)}`; // Add new ID to the string
-            existingIdsData += `,${key.replace('flight_', '')}`; // Append the new ID
+            let existingIdsData = await CapacitorKV.get('flight_ids').value; // Get existing data or initialize as empty string
+            const newId = key.replace('flight_', ''); // Extract the new ID
+
+            if (existingIdsData === "") {
+                existingIdsData = newId; // First ID, directly set the value
+            } else {
+                existingIdsData += `,${newId}`; // Append new ID with a comma
+            }
+
             await CapacitorKV.set('flight_ids', existingIdsData);
             console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
         }
