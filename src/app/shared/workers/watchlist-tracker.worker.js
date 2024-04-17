@@ -6,7 +6,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     const maxConcurrentFlights = 5; // Limit concurrent requests
 
     const interval = setInterval(async () => {
-        const flights = JSON.parse(await CapacitorKV.get('watchlist') || '[]');
+        let flights = await getAllFlightIds(); // Retrieve all flight IDs
         console.log(`Checking ${flights.length} flights for updates`);
 
         if (flights.length > 0 && activeFlights) {
@@ -77,10 +77,28 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     }, intervalDuration);
 };
 
+const getAllFlightIds = async () => {
+    try {
+        const idsJson = await CapacitorKV.get('flight_ids');
+        return JSON.parse(idsJson || '[]');
+    } catch (error) {
+        console.error('Failed to retrieve flight IDs:', error);
+        return [];
+    }
+};
+
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
     try {
         await CapacitorKV.set(key, value);
+        if (key.startsWith('flight_')) {
+            const existingIds = JSON.parse(await CapacitorKV.get('flight_ids') || '[]');
+            if (!existingIds.includes(key)) {
+                existingIds.push(key);
+                await CapacitorKV.set('flight_ids', JSON.stringify(existingIds));
+            }
+        }
+
         console.log(`Data stored for ${key}`);
     } catch (error) {
         console.error('Failed to save data:', key, error);
@@ -104,7 +122,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
             for (const id of trackIds) {
-                const key = id;
+                const key = `flight_${id}`;
                 const value = args[id];
                 console.log(`Storing data for flight ID: ${key}, value: ${JSON.stringify(value)}`);
                 await storeData(key, value);
