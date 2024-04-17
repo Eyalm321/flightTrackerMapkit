@@ -25,6 +25,7 @@ export class WatchListService {
       if (!isActive) {
         this.startBackgroundTask();
       }
+      this.startBackgroundTask();
     });
   }
 
@@ -72,6 +73,7 @@ export class WatchListService {
   startBackgroundTask(): void {
     console.log('Starting background task');
 
-    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', this.getTrackProperties());
+    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', [{ 'foo': 'bar' }]);
   }
 }
+
