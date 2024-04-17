@@ -8,7 +8,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     const interval = setInterval(async () => {
         let flightsData = await CapacitorKV.get('flight_ids').value;
         console.log("Retrieved flight_ids (raw):", flightsData);
-        let flights = parseJsonArray(flightsData);
+        let flights = Object.values(flightsData || {});
         console.log("Parsed flights:", flights);
 
         if (flights.length > 0 && activeFlights) {
@@ -86,14 +86,14 @@ const storeData = async (key, value) => {
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
-            let existingIds = []; // Initialize as an empty array
+            let existingIds = {}; // Initialize as an empty array
             const existingIdsData = await CapacitorKV.get('flight_ids').value;
             if (existingIdsData) {
-                existingIds = parseJsonArray(existingIdsData);
+                existingIds = { ...existingIdsData };
             }
             console.log(`Storing flight IDs: ${JSON.stringify(existingIds)}`);
-            if (!existingIds.includes(key)) {
-                existingIds.push(key);
+            if (!Object.keys(existingIds).includes(key)) {
+                Object.assign(existingIds, { [key]: value });
                 console.log(`Flight ID pushed: ${key} to existing IDs: ${JSON.stringify(existingIds)}`);
             }
             await CapacitorKV.set('flight_ids', JSON.stringify(existingIds));
@@ -105,14 +105,6 @@ const storeData = async (key, value) => {
         console.error('Failed to save data:', key, error);
     }
 };
-
-const parseJsonArray = (jsonString) => {
-    if (!jsonString) return []; // Handle empty string case
-    return jsonString.split(',')
-        .map(item => item.trim())
-        .map(item => item.replace(/^['"]+|['"]+$/g, '')); // Remove leading and trailing quotes
-};
-
 
 const mapAltitudeToStatus = (altitude) => {
     if (altitude === 'ground') return 'Grounded';
