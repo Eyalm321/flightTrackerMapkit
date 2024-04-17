@@ -92,7 +92,7 @@ const storeData = async (key, value) => {
         if (key.startsWith('flight_')) {
             let existingIdsData = await CapacitorKV.get('flight_ids').value; // Get existing data or initialize as empty string
             const newId = key.replace('flight_', ''); // Extract the new ID
-
+            console.log('New ID:', newId);
             if (existingIdsData === "") {
                 existingIdsData = newId; // First ID, directly set the value
             } else {
