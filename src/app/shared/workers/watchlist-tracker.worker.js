@@ -66,6 +66,7 @@ const trackFlightsInBackground = async () => {
 };
 
 const storeData = async (key, value) => {
+    console.log(`Storing data for ${key}`);
     try {
         await CapacitorKV.set(key, value);
         console.log(`Data stored for ${key}`);
