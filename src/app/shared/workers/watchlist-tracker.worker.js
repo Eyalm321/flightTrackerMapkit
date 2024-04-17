@@ -1,5 +1,3 @@
-import { LocalNotifications } from '@capacitor/local-notifications';
-
 const trackFlightsInBackground = async () => {
     let activeFlights = true;  // Assume there are active flights initially
 
@@ -25,13 +23,16 @@ const trackFlightsInBackground = async () => {
                         }));
 
                         if (currentStatus !== storedStatus) {
-                            await LocalNotifications.schedule({
+                            let scheduleDate = new Date();
+                            scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+
+                            await CapacitorNotifications.schedule({
                                 notifications: [
                                     {
                                         title: 'Flight Status Change',
                                         body: `Flight ${id} is now ${currentStatus}`,
                                         id: id,
-                                        schedule: { at: new Date(Date.now() + 1000) },
+                                        scheduleAt: scheduleDate,
                                     }
                                 ]
                             });
