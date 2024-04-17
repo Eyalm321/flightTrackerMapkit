@@ -92,12 +92,17 @@ const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
     try {
         await CapacitorKV.set(key, value);
+        const savedData = await CapacitorKV.get(key);
+        console.log(`Data stored for ${key}: ${savedData}`);
         if (key.startsWith('flight_')) {
-            const existingIds = JSON.parse(await CapacitorKV.get('flight_ids') || '[]');
-            if (!existingIds.includes(key)) {
-                existingIds.push(key);
-                await CapacitorKV.set('flight_ids', JSON.stringify(existingIds));
+            const existingIdsArr = JSON.parse(await CapacitorKV.get('flight_ids') || '[]');
+            if (!existingIdsArr.includes(key)) {
+                existingIdsArr.push(key);
             }
+            console.log(existingIdsArr);
+            const str = JSON.stringify(existingIdsArr);
+            console.log(`Storing flight IDs: ${str}`);
+            await CapacitorKV.set('flight_ids', JSON.stringify(existingIdsArr));
         }
 
         console.log(`Data stored for ${key}`);
