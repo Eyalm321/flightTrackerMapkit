@@ -32,7 +32,8 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                         }
 
                         const data = await response.json();
-                        console.log(`Data Exists for flight ${id}:`, JSON.stringify(data['ac'][0], 'Length:', data['ac'].length));
+                        console.log(`Data Exists for flight ${id}:`, JSON.stringify(data['ac'][0]));
+                        console.log(`Length of data: ${data['ac'].length}`);
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
                         const currentAltitude = data['ac'][0].alt_baro;
@@ -67,10 +68,8 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                             activeFlights = true;
                         }
                         // }
-                        resolve();
                     } catch (error) {
                         console.error('Error fetching flight data for flight ID', id, ':', error);
-                        reject(error);
                     }
                 }));
             }
@@ -136,6 +135,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
             }
             await trackFlightsInBackground(resolve, reject, () => {
                 console.log('Background tracking completed');
+                resolve();
             });
         }
         console.log('Tracking initiated.');
