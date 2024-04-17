@@ -9,9 +9,10 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
         let flightsData = await CapacitorKV.get('flight_ids').value;
         console.log("Retrieved flight_ids (raw):", flightsData);
         // split the string of flight IDs into an array
-        const flights = flightsData ? flightsData.split(',') : [];
+        const flights = flightsData.split(',');
 
-
+        console.log(`Checking ${flights.length} flights`);
+        console.log(`flights: ${flights}`);
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;
 
