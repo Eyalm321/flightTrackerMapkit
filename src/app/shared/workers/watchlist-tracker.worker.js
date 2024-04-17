@@ -8,8 +8,9 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     const interval = setInterval(async () => {
         let flightsData = await CapacitorKV.get('flight_ids').value;
         console.log("Retrieved flight_ids (raw):", flightsData);
-        let flights = Object.values(flightsData || {});
-        console.log("Parsed flights:", flights);
+        // split the string of flight IDs into an array
+        const flights = flightsData ? flightsData.split(',') : [];
+
 
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;
@@ -86,14 +87,16 @@ const storeData = async (key, value) => {
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
-            let existingIds = {}; // Initialize as an empty array
+            let existingIds = '';
             const existingIdsData = await CapacitorKV.get('flight_ids').value;
             console.log(`Storing flight IDs: ${JSON.stringify(existingIdsData)}`);
-            if (!Object.keys(existingIdsData).includes(key)) {
-                Object.assign(existingIdsData, { [key]: value });
-                console.log(`Flight ID pushed: ${key} to existing IDs: ${JSON.stringify(existingIdsData)}`);
+            // create a string of comma-separated flight IDs
+            if (existingIdsData) {
+                existingIds = Object.keys(existingIdsData).join(',');
+                // add the new flight ID to the string
+                existingIds += `,${key.replace('flight_', '')}`;
             }
-            await CapacitorKV.set('flight_ids', JSON.stringify(existingIdsData));
+            await CapacitorKV.set('flight_ids', existingIdsData);
             console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
         }
 
