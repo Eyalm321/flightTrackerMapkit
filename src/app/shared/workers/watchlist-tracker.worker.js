@@ -26,24 +26,23 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                         const baseUrl = 'https://api.adsb.lol';
                         const response = await fetch(`${baseUrl}/v2/icao/${id}`);
                         const data = await response.json();
-
+                        console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data));
                         if (data.ac && data.ac.length > 0) {
                             const currentAltitude = data.ac[0].alt_baro;
                             console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
                             const currentStatus = mapAltitudeToStatus(currentAltitude);
-                            const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
-                            const storedStatus = storedData.status;
+                            const storedStatus = await CapacitorKV.get(id).value;
 
                             // Consider using a more efficient storage solution for larger datasets
-                            await storeData(`flight_${id}`, JSON.stringify({
-                                status: currentStatus,
-                                altitude: currentAltitude
-                            }));
+                            // await storeData(`flight_${id}`, storedStatus);
 
                             console.log('Flight updated:', id, currentStatus, currentAltitude);
 
                             if (currentStatus !== storedStatus) {
                                 console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
+
+                                await storeData(id, currentStatus);
+
                                 let scheduleDate = new Date();
                                 scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
 
@@ -85,21 +84,28 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
     try {
-        await CapacitorKV.set(key, value);
-        const savedData = await CapacitorKV.get(key);
-        console.log(`Data stored for ${key}: ${savedData.value}`);
-        if (key.startsWith('flight_')) {
-            let existingIdsData = await CapacitorKV.get('flight_ids').value;
-            existingIdsData += `,${key.replace('flight_', '')}`; // Append the new ID
-            await CapacitorKV.set('flight_ids', existingIdsData);
-            console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
+        const existingValue = await CapacitorKV.get(key);
+        if (existingValue.value !== null) {
+            console.log(`Data already exists for ${key}, not updating flight_ids.`);
+        } else {
+            await CapacitorKV.set(key, value);
+            const savedData = await CapacitorKV.get(key);
+            console.log(`Data stored for ${key}: ${savedData.value}`);
+            if (key.startsWith('flight_')) {
+                const idsResult = await CapacitorKV.get('flight_ids');
+                let existingIdsData = idsResult.value || "";
+                if (!existingIdsData.includes(key.replace('flight_', ''))) {
+                    existingIdsData += existingIdsData ? `,${key.replace('flight_', '')}` : key.replace('flight_', '');
+                    await CapacitorKV.set('flight_ids', existingIdsData);
+                    console.log("Stored flight_ids (updated):", await CapacitorKV.get('flight_ids').value);
+                }
+            }
         }
-
-        console.log(`Data stored for ${key}`);
     } catch (error) {
         console.error('Failed to save data:', key, error);
     }
 };
+
 
 const mapAltitudeToStatus = (altitude) => {
     if (altitude === 'ground') return 'Grounded';
