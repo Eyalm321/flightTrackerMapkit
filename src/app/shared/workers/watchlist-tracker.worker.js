@@ -85,6 +85,7 @@ const storeData = async (key, value) => {
         resolve();
     } catch (error) {
         console.error('Failed to save data:', key, error);
+        reject();
     }
 };
 
@@ -115,5 +116,6 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         resolve();
     } catch (error) {
         console.error('Failed to initiate tracking:', error);
+        reject();
     }
 });
