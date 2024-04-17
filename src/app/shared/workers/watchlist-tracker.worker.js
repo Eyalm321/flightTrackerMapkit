@@ -91,11 +91,12 @@ const storeData = async (key, value) => {
             const existingIdsData = await CapacitorKV.get('flight_ids').value;
             console.log(`Storing flight IDs: ${JSON.stringify(existingIdsData)}`);
             // create a string of comma-separated flight IDs
-            if (existingIdsData) {
+            if (!!existingIdsData) {
                 existingIds = Object.keys(existingIdsData).join(',');
                 // add the new flight ID to the string
+                console.log(`1Existing flight IDs: ${existingIds}`);
                 existingIds += `,${key.replace('flight_', '')}`;
-                console.log(`Existing flight IDs: ${existingIds}`);
+                console.log(`2Existing flight IDs: ${existingIds}`);
             }
             await CapacitorKV.set('flight_ids', existingIdsData);
             console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
