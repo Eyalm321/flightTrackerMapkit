@@ -55,7 +55,7 @@ const trackFlightsInBackground = async () => {
             clearInterval(interval);
             console.log('No flights to track. Stopping background tracking.');
         }
-    }, 900000); // Check every 15 minutes
+    }, 60000); // Check every 15 minutes
 };
 
 
