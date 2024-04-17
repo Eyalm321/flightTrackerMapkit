@@ -24,20 +24,18 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                     console.log(`Fetching data for flight ID: ${id}`);
                     try {
                         const baseUrl = 'https://api.adsb.lol';
-                        const response = await fetch(`${baseUrl}/v2/icao/${id}`).then(res => {
-                            if (res.ok) {
-                                return res.body;
-                            } else {
-                                throw new Error(`Failed to fetch data for flight ${id}: ${res.statusText}`);
-                            }
+                        const response = await fetch(`${baseUrl}/v2/icao/${id}`);
 
-                        });
-                        console.log(`Data retrieved for flight ${id}:`, response);
-                        console.log(`Response status: ${response.ok}`);
+                        if (!response.ok) {
+                            console.error(`Failed to fetch data for flight ${id}:`, response.statusText);
+                            return;
+                        }
 
+                        const data = await response.json();
+                        console.log(`Data retrieved for flight ${id}:`, data['ac'][0]);
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
-                        const currentAltitude = response.ac[0].alt_baro;
+                        const currentAltitude = data['ac'][0].alt_baro;
                         console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
                         const currentStatus = mapAltitudeToStatus(currentAltitude);
                         const storedStatus = await CapacitorKV.get(id).value;
