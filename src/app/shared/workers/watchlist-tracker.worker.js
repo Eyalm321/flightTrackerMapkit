@@ -7,6 +7,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 
     const interval = setInterval(async () => {
         let flights = await getAllFlightIds(); // Retrieve all flight IDs
+        console.log('All flight IDs:', flights);
         console.log(`Checking ${flights.length} flights for updates`);
 
         if (flights.length > 0 && activeFlights) {
