@@ -95,7 +95,7 @@ const storeData = async (key, value) => {
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
-            const existingIdsData = JSON.parse(await CapacitorKV.get('flight_ids').value);
+            const existingIdsData = await CapacitorKV.get('flight_ids').value;
             console.log(`Existing IDs data: ${JSON.stringify(existingIdsData)}`);
             const existingIds = existingIdsData ? existingIdsData.value : [];
             if (!existingIds.includes(key)) {
@@ -127,7 +127,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         const trackIds = Object.keys(args);
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
-            CapacitorKV.set('flight_ids', '');
+            CapacitorKV.set('flight_ids', 'EMPTY');
             for (const id of trackIds) {
                 const key = `flight_${id}`;
                 const value = JSON.stringify(args[id]);
