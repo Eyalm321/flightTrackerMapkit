@@ -88,15 +88,13 @@ const storeData = async (key, value) => {
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
-            currentId = savedData.key.replace('flight_', '');
-            const idsStr = await CapacitorKV.get('flight_ids').value;
-            if (!idsStr.includes(currentId)) {
-                console.log("Flight ID not found in flight_ids, adding:", currentId);
-                existingIdsData += `,${key.replace('flight_', '')}`;
-                await CapacitorKV.set('flight_ids', existingIdsData);
-                console.log("Stored flight_ids (updated):", await CapacitorKV.get('flight_ids').value);
-            }
+            let existingIdsData = await CapacitorKV.get('flight_ids').value;
+            existingIdsData += `,${key.replace('flight_', '')}`; // Append the new ID
+            await CapacitorKV.set('flight_ids', existingIdsData);
+            console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
         }
+
+        console.log(`Data stored for ${key}`);
     } catch (error) {
         console.error('Failed to save data:', key, error);
     }
