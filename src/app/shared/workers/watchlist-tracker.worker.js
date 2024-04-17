@@ -102,7 +102,7 @@ const storeData = async (key, value) => {
                 existingIds.push(key);
             }
             console.log(`Storing flight IDs: ${existingIds}`);
-            await CapacitorKV.set('flight_ids', existingIds);
+            await CapacitorKV.set('flight_ids', JSON.stringify(existingIds));
         }
 
         console.log(`Data stored for ${key}`);
