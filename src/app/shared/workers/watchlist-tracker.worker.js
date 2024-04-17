@@ -24,23 +24,18 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                     console.log(`Fetching data for flight ID: ${id}`);
                     try {
                         const baseUrl = 'https://api.adsb.lol';
-                        const response = await fetch(`${baseUrl}/v2/icao/${id}`);
+                        const response = await fetch(`${baseUrl}/v2/icao/${id}`).then(res => {
+                            if (res.ok) {
+                                console.log(`Data retrieved for flight ${id}:`, res.ac[0].hex);
+                                return res.json();
+                            } else {
+                                throw new Error(`Failed to fetch data for flight ${id}: ${res.statusText}`);
+                            }
+
+                        });
                         console.log(`Data retrieved for flight ${id}:`, response);
                         console.log(`Response status: ${response.ok}`);
-                        const data = await response.json();
-                        console.log(`Data retrieved for flight ${id}:`, data);
-                        if (response.ac[0].alt_baro) {
-                            console.log(`Data retrieved for flight ${id}:`, response.ac[0].alt_baro);
-                        }
-                        if (response.body.ac[0].alt_baro) {
-                            console.log(`Data retrieved for flight ${id}:`, response.body.ac[0].alt_baro);
-                        }
-                        if (response.json().ac[0].alt_baro) {
-                            console.log(`Data retrieved for flight ${id}:`, response.json().ac[0].alt_baro);
-                        }
-                        if (response.data.ac[0].alt_baro) {
-                            console.log(`Data retrieved for flight ${id}:`, response.data.ac[0].alt_baro);
-                        }
+
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
                         const currentAltitude = response.ac[0].alt_baro;
