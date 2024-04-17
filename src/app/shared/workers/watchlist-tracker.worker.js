@@ -108,7 +108,9 @@ const storeData = async (key, value) => {
 
 const parseJsonArray = (jsonString) => {
     if (!jsonString) return []; // Handle empty string case
-    return jsonString.split(',').map(item => item.trim());
+    return jsonString.split(',')
+        .map(item => item.trim())
+        .map(item => item.replace(/^['"]+|['"]+$/g, '')); // Remove leading and trailing quotes
 };
 
 
