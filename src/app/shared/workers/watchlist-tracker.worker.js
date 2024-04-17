@@ -26,7 +26,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                         const baseUrl = 'https://api.adsb.lol';
                         const response = await fetch(`${baseUrl}/v2/icao/${id}`).then(res => {
                             if (res.ok) {
-                                console.log(`Data retrieved for flight ${id}:`, JSON.stringify(res.body.ac[0].hex));
+                                console.log(`Data retrieved for flight ${id}:`, JSON.stringify(res.body.ac));
                                 return res.body;
                             } else {
                                 throw new Error(`Failed to fetch data for flight ${id}: ${res.statusText}`);
