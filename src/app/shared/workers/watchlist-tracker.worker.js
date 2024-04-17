@@ -95,6 +95,7 @@ const storeData = async (key, value) => {
                 existingIds = Object.keys(existingIdsData).join(',');
                 // add the new flight ID to the string
                 existingIds += `,${key.replace('flight_', '')}`;
+                console.log(`Existing flight IDs: ${existingIds}`);
             }
             await CapacitorKV.set('flight_ids', existingIdsData);
             console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
