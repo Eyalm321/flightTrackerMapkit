@@ -89,9 +89,11 @@ const storeData = async (key, value) => {
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
             let existingIdsData = await CapacitorKV.get('flight_ids').value;
-            existingIdsData += `,${key.replace('flight_', '')}`; // Append the new ID
-            await CapacitorKV.set('flight_ids', existingIdsData);
-            console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
+            if (!existingIdsData.includes(key.replace('flight_', ''))) {
+                existingIdsData += `,${key.replace('flight_', '')}`; // Append the new ID
+                await CapacitorKV.set('flight_ids', existingIdsData);
+                console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
+            }
         }
 
         console.log(`Data stored for ${key}`);
