@@ -7,7 +7,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 
     const interval = setInterval(async () => {
         let flights = await CapacitorKV.get('flight_ids').value;
-        console.log('All flight IDs:', flights);
+        console.log('All flight IDs:', JSON.stringify(flights));
         console.log(`Checking ${flights.length} flights for updates`);
 
         if (flights.length > 0 && activeFlights) {
