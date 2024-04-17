@@ -93,13 +93,11 @@ const storeData = async (key, value) => {
     try {
         await CapacitorKV.set(key, value);
         const savedData = await CapacitorKV.get(key);
-        dummyArr = JSON.parse(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']);
-        console.log(`Dummy array: ${JSON.stringify(dummyArr)}`);
         console.log(`Data stored for ${key}: ${savedData.value}`);
         if (key.startsWith('flight_')) {
             const existingIdsData = await CapacitorKV.get('flight_ids').value;
             console.log(`Existing IDs data: ${JSON.stringify(existingIdsData)}`);
-            const existingIds = JSON.parse(existingIdsData);
+            const existingIds = parseJsonArray(existingIdsData);
             console.log(`Storing flight IDs: ${JSON.stringify(existingIds)}`);
             if (!existingIds.includes(key)) {
                 existingIds.push(key);
@@ -112,6 +110,11 @@ const storeData = async (key, value) => {
         console.error('Failed to save data:', key, error);
     }
 };
+
+const parseJsonArray = (jsonString) => {
+    return jsonString.replace(/^\[/, '').replace(/\]$/, '').split(',').map(item => item.trim().replace(/^"|"$/g, ''));
+};
+
 
 const mapAltitudeToStatus = (altitude) => {
     if (altitude === 'ground') return 'Grounded';
