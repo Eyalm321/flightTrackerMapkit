@@ -84,21 +84,16 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
     try {
-        const existingValue = await CapacitorKV.get(key);
-        if (existingValue.value !== null) {
-            console.log(`Data already exists for ${key}, not updating flight_ids.`);
-        } else {
-            await CapacitorKV.set(key, value);
-            const savedData = await CapacitorKV.get(key);
-            console.log(`Data stored for ${key}: ${savedData.value}`);
-            if (key.startsWith('flight_')) {
-                const idsResult = await CapacitorKV.get('flight_ids');
-                let existingIdsData = idsResult.value || "";
-                if (!existingIdsData.includes(key.replace('flight_', ''))) {
-                    existingIdsData += existingIdsData ? `,${key.replace('flight_', '')}` : key.replace('flight_', '');
-                    await CapacitorKV.set('flight_ids', existingIdsData);
-                    console.log("Stored flight_ids (updated):", await CapacitorKV.get('flight_ids').value);
-                }
+        await CapacitorKV.set(key, value);
+        const savedData = await CapacitorKV.get(key);
+        console.log(`Data stored for ${key}: ${savedData.value}`);
+        if (key.startsWith('flight_')) {
+            const idsResult = await CapacitorKV.get('flight_ids');
+            let existingIdsData = idsResult.value || "";
+            if (!existingIdsData.includes(key.replace('flight_', ''))) {
+                existingIdsData += existingIdsData ? `,${key.replace('flight_', '')}` : key.replace('flight_', '');
+                await CapacitorKV.set('flight_ids', existingIdsData);
+                console.log("Stored flight_ids (updated):", await CapacitorKV.get('flight_ids').value);
             }
         }
     } catch (error) {
