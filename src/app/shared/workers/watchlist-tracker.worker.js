@@ -1,68 +1,79 @@
 const trackFlightsInBackground = async () => {
-    let activeFlights = true;  // Assume there are active flights initially
+    let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
+
+    const intervalDuration = 120000; // Increased interval to 120 seconds
+    const maxConcurrentFlights = 5; // Limit concurrent requests
 
     const interval = setInterval(async () => {
         const flights = JSON.parse(await CapacitorKV.get('watchlist') || '[]');
         console.log(`Checking ${flights.length} flights for updates`);
 
         if (flights.length > 0 && activeFlights) {
-            activeFlights = false;  // Reset for each interval execution
-            for (const id of flights) {
-                console.log(`Fetching data for flight ID: ${id}`);
-                try {
-                    const baseUrl = 'https://api.adsb.lol';
-                    const response = await fetch(`${baseUrl}/v2/icao/${id}`);
-                    const data = await response.json();
+            activeFlights = false;
 
-                    if (data.ac && data.ac.length > 0) {
-                        const currentAltitude = data.ac[0].alt_baro;
-                        console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
-                        const currentStatus = mapAltitudeToStatus(currentAltitude);
-                        const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
-                        const storedStatus = storedData.status;
+            // Process flights in batches
+            for (let i = 0; i < flights.length; i += maxConcurrentFlights) {
+                const flightBatch = flights.slice(i, i + maxConcurrentFlights);
+                await Promise.all(flightBatch.map(async (id) => {
+                    console.log(`Fetching data for flight ID: ${id}`);
+                    try {
+                        const baseUrl = 'https://api.adsb.lol';
+                        const response = await fetch(`${baseUrl}/v2/icao/${id}`);
+                        const data = await response.json();
 
-                        await storeData(`flight_${id}`, JSON.stringify({
-                            status: currentStatus,
-                            altitude: currentAltitude
-                        }));
-                        console.log('Flight updated:', id, currentStatus, currentAltitude);
+                        if (data.ac && data.ac.length > 0) {
+                            const currentAltitude = data.ac[0].alt_baro;
+                            console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
+                            const currentStatus = mapAltitudeToStatus(currentAltitude);
+                            const storedData = JSON.parse(await CapacitorKV.get(`flight_${id}`) || '{}');
+                            const storedStatus = storedData.status;
 
-                        if (currentStatus !== storedStatus) {
-                            console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
-                            let scheduleDate = new Date();
-                            scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+                            // Consider using a more efficient storage solution for larger datasets
+                            await storeData(`flight_${id}`, JSON.stringify({
+                                status: currentStatus,
+                                altitude: currentAltitude
+                            }));
 
-                            await CapacitorNotifications.schedule({
-                                notifications: [
-                                    {
+                            console.log('Flight updated:', id, currentStatus, currentAltitude);
+
+                            if (currentStatus !== storedStatus) {
+                                console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
+                                let scheduleDate = new Date();
+                                scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+
+                                await CapacitorNotifications.schedule({
+                                    notifications: [{
                                         title: 'Flight Status Change',
                                         body: `Flight ${id} is now ${currentStatus}`,
                                         id: id,
                                         scheduleAt: scheduleDate,
-                                    }
-                                ]
-                            });
-                        }
+                                    }]
+                                });
+                            }
 
-                        if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
-                            activeFlights = true;
+                            if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
+                                activeFlights = true;
+                            }
                         }
+                    } catch (error) {
+                        console.error('Error fetching flight data for flight ID', id, ':', error);
                     }
-                } catch (error) {
-                    console.error('Error fetching flight data for flight ID', id, ':', error);
-                }
+                }));
             }
 
             if (!activeFlights) {
                 clearInterval(interval);
                 console.log('All flights are landed or data not available. Stopping background tracking.');
+                // Call completed() to signal task completion
+                completed(); // Assuming this function exists within your background task framework
             }
         } else {
             clearInterval(interval);
             console.log('No flights to track. Stopping background tracking.');
+            completed();
         }
-    }, 60000); // Check every 60 seconds
+    }, intervalDuration);
 };
 
 const storeData = async (key, value) => {
