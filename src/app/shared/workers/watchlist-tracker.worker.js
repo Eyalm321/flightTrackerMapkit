@@ -92,7 +92,7 @@ const storeData = async (key, value) => {
             const idsStr = await CapacitorKV.get('flight_ids').value;
             if (!idsStr.includes(currentId)) {
                 console.log("Flight ID not found in flight_ids, adding:", currentId);
-                existingIdsData += existingIdsData ? `,${key.replace('flight_', '')}` : key.replace('flight_', '');
+                existingIdsData += `,${key.replace('flight_', '')}`;
                 await CapacitorKV.set('flight_ids', existingIdsData);
                 console.log("Stored flight_ids (updated):", await CapacitorKV.get('flight_ids').value);
             }
