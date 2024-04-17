@@ -10,6 +10,8 @@ export class BackgroundWebworkerService {
   constructor() { }
 
   public async startBackgroundTask(workerId: string, eventName: string, data: { [key: string]: string; }[]): Promise<void> {
+    console.log(`Starting background task for event: ${eventName}, workerId: ${workerId}, data: ${JSON.stringify(data)}`);
+
     if (!this.tasks.has(eventName)) {
       await BackgroundRunner.dispatchEvent({
         label: workerId,

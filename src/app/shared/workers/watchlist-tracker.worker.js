@@ -56,6 +56,7 @@ const trackFlightsInBackground = async () => {
                                 activeFlights = true;
                             }
                         }
+                        resolve();
                     } catch (error) {
                         console.error('Error fetching flight data for flight ID', id, ':', error);
                     }
@@ -81,6 +82,7 @@ const storeData = async (key, value) => {
     try {
         await CapacitorKV.set(key, value);
         console.log(`Data stored for ${key}`);
+        resolve();
     } catch (error) {
         console.error('Failed to save data:', key, error);
     }
@@ -96,21 +98,21 @@ const mapAltitudeToStatus = (altitude) => {
     return 'Unknown';
 };
 
-addEventListener('startTracking', async (event) => {
+addEventListener('startTracking', async (resolve, reject, args) => {
     try {
-        console.log('Received startTracking event with args:', event);
-        console.log('Received startTracking event with args:', event.data);
-        const trackIds = Object.keys(details);
+        console.log('Received startTracking event with args:', JSON.stringify(args));
+        const trackIds = Object.keys(args);
         console.log(`Start tracking called with ${trackIds.length} flights`);
-        if (Object.keys(details).length > 0) {
+        if (Object.keys(args).length > 0) {
             for (const id of trackIds) {
                 const key = id;
-                const value = details[id];
+                const value = args[id];
                 await storeData(key, value);
             }
             await trackFlightsInBackground();
         }
         console.log('Tracking initiated.');
+        resolve();
     } catch (error) {
         console.error('Failed to initiate tracking:', error);
     }
