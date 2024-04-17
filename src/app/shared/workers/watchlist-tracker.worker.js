@@ -24,7 +24,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                     console.log(`Fetching data for flight ID: ${id}`);
                     try {
                         const baseUrl = 'https://api.adsb.lol';
-                        const response = await fetch(`${baseUrl}/v2/icao/${id}`).then(response => response.json());
+                        const response = await fetch(`${baseUrl}/v2/icao/${id}`).then(data);
                         console.log(`Data retrieved for flight ${id}:`, JSON.stringify(response));
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
