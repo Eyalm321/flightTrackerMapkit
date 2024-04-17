@@ -129,7 +129,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         if (Object.keys(args).length > 0) {
             for (const id of trackIds) {
                 const key = `flight_${id}`;
-                const value = args[id];
+                const value = JSON.stringify(args[id]);
                 console.log(`Storing data for flight ID: ${id} ${key}, value: ${JSON.stringify(value)}`);
                 await storeData(key, value);
             }
