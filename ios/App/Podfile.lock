@@ -1,0 +1,76 @@
+PODS:
+  - Capacitor (6.0.0-rc.2):
+    - CapacitorCordova
+  - CapacitorApp (6.0.0-rc.1):
+    - Capacitor
+  - CapacitorBackgroundRunner (1.0.5):
+    - Capacitor
+  - CapacitorCommunityHttp (1.4.1):
+    - Capacitor
+  - CapacitorCordova (6.0.0-rc.2)
+  - CapacitorGeolocation (6.0.0-rc.1):
+    - Capacitor
+  - CapacitorHaptics (6.0.0-rc.1):
+    - Capacitor
+  - CapacitorKeyboard (6.0.0-rc.1):
+    - Capacitor
+  - CapacitorLocalNotifications (6.0.0):
+    - Capacitor
+  - CapacitorPushNotifications (6.0.0):
+    - Capacitor
+  - CapacitorStatusBar (6.0.0-rc.1):
+    - Capacitor
+
+DEPENDENCIES:
+  - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
+  - "CapacitorBackgroundRunner (from `../../node_modules/@capacitor/background-runner`)"
+  - "CapacitorCommunityHttp (from `../../node_modules/@capacitor-community/http`)"
+  - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
+  - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
+  - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
+  - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
+  - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+  - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../node_modules/@capacitor/app"
+  CapacitorBackgroundRunner:
+    :path: "../../node_modules/@capacitor/background-runner"
+  CapacitorCommunityHttp:
+    :path: "../../node_modules/@capacitor-community/http"
+  CapacitorCordova:
+    :path: "../../node_modules/@capacitor/ios"
+  CapacitorGeolocation:
+    :path: "../../node_modules/@capacitor/geolocation"
+  CapacitorHaptics:
+    :path: "../../node_modules/@capacitor/haptics"
+  CapacitorKeyboard:
+    :path: "../../node_modules/@capacitor/keyboard"
+  CapacitorLocalNotifications:
+    :path: "../../node_modules/@capacitor/local-notifications"
+  CapacitorPushNotifications:
+    :path: "../../node_modules/@capacitor/push-notifications"
+  CapacitorStatusBar:
+    :path: "../../node_modules/@capacitor/status-bar"
+
+SPEC CHECKSUMS:
+  Capacitor: 616838064c270088c3c51e0bb2f57259c09f3d55
+  CapacitorApp: 649eca1980ddb28d43177bc78b252123e243b848
+  CapacitorBackgroundRunner: f2415aebbcea4e744eb45f785a50f07ba72f1d0b
+  CapacitorCommunityHttp: 7be90668527ef14ee10d08135b0e00fac9cf8247
+  CapacitorCordova: 62056f853503fb402c3bd9ea9b93b30f23d1c1ce
+  CapacitorGeolocation: afce3afbce975d43f9442255914b5575a6e901ce
+  CapacitorHaptics: b004f0eb5b1cbef124889ccf745679f3aa9568ef
+  CapacitorKeyboard: 683563ad6b13c1a46bfc710d49b4621570feef48
+  CapacitorLocalNotifications: 4ab68f0be5f697a579558fadd307d823a9ec1c26
+  CapacitorPushNotifications: e18636e8a96f1d70b4c669e21c730e995bf5e5c9
+  CapacitorStatusBar: 31febfff4331f2e800847abdac79d64f04eb4206
+
+PODFILE CHECKSUM: de11749454f50efed8a4d651fc11523289342430
+
+COCOAPODS: 1.15.2
