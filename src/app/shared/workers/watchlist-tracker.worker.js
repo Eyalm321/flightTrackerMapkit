@@ -96,15 +96,15 @@ const mapAltitudeToStatus = (altitude) => {
     return 'Unknown';
 };
 
-addEventListener('startTracking', async (resolve, reject, args) => {
+addEventListener('startTracking', async (resolve, reject, details) => {
     try {
-        console.log('Received startTracking event with args:', args);
-        const trackIds = Object.keys(args);
+        console.log('Received startTracking event with args:', details);
+        const trackIds = Object.keys(details);
         console.log(`Start tracking called with ${trackIds.length} flights`);
-        if (Object.keys(args).length > 0) {
+        if (Object.keys(details).length > 0) {
             for (const id of trackIds) {
                 const key = id;
-                const value = args[id];
+                const value = details[id];
                 await storeData(key, value);
             }
             await trackFlightsInBackground();
