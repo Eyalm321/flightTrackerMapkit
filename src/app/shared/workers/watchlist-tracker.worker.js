@@ -2,11 +2,11 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
 
-    const intervalDuration = 120000; // Increased interval to 120 seconds
+    const intervalDuration = 30000; // Increased interval to 120 seconds
     const maxConcurrentFlights = 5; // Limit concurrent requests
 
     const interval = setInterval(async () => {
-        let flights = await CapacitorKV.get('flight_ids');
+        let flights = await CapacitorKV.get('flight_ids').value;
         console.log('All flight IDs:', flights);
         console.log(`Checking ${flights.length} flights for updates`);
 
