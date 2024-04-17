@@ -6,9 +6,10 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     const maxConcurrentFlights = 5; // Limit concurrent requests
 
     const interval = setInterval(async () => {
-        let flights = await CapacitorKV.get('flight_ids').value;
-        console.log("Flights data type:", typeof flights);
-        console.log("Flights content:", flights);
+        let flightsData = await CapacitorKV.get('flight_ids').value;
+        console.log("Retrieved flight_ids (raw):", flightsData);
+        let flights = parseJsonArray(flightsData);
+        console.log("Parsed flights:", flights);
 
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;
@@ -96,6 +97,7 @@ const storeData = async (key, value) => {
                 console.log(`Flight ID pushed: ${key} to existing IDs: ${JSON.stringify(existingIds)}`);
             }
             await CapacitorKV.set('flight_ids', JSON.stringify(existingIds));
+            console.log("Stored flight_ids (raw):", await CapacitorKV.get('flight_ids').value);
         }
 
         console.log(`Data stored for ${key}`);
