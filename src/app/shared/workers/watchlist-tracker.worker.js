@@ -26,8 +26,9 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                         const baseUrl = 'https://api.adsb.lol';
                         const response = await fetch(`${baseUrl}/v2/icao/${id}`);
                         console.log(`Data retrieved for flight ${id}:`, JSON.stringify(response));
-                        const data = response.body;
-                        console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data));
+                        console.log(`Response status: ${response.ok}`);
+                        console.log(`Data retrieved for flight ${id}:`, response.body);
+                        console.log(`Data retrieved for flight ${id}:`, JSON.stringify(response.bodyUsed));
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
                         const currentAltitude = response.ac[0].alt_baro;
