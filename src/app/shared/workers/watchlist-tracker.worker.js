@@ -1,4 +1,4 @@
-const trackFlightsInBackground = async () => {
+const trackFlightsInBackground = async (resolve, reject, completed) => {
     let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
 
@@ -82,10 +82,8 @@ const storeData = async (key, value) => {
     try {
         await CapacitorKV.set(key, value);
         console.log(`Data stored for ${key}`);
-        resolve();
     } catch (error) {
         console.error('Failed to save data:', key, error);
-        reject();
     }
 };
 
@@ -101,16 +99,19 @@ const mapAltitudeToStatus = (altitude) => {
 
 addEventListener('startTracking', async (resolve, reject, args) => {
     try {
-        console.log('Received startTracking event with args:', JSON.stringify(args.details), JSON.stringify(args[0]));
+        console.log('Received startTracking event with args:', JSON.stringify(args));
         const trackIds = Object.keys(args);
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
             for (const id of trackIds) {
                 const key = id;
                 const value = args[id];
+                console.log(`Storing data for flight ID: ${key}, value: ${JSON.stringify(value)}`);
                 await storeData(key, value);
             }
-            await trackFlightsInBackground();
+            await trackFlightsInBackground(resolve, reject, () => {
+                console.log('Background tracking completed');
+            });
         }
         console.log('Tracking initiated.');
         resolve();
