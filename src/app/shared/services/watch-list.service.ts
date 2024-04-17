@@ -38,6 +38,7 @@ export class WatchListService {
     this.trackProperties = updatedWatchList.map(watch => {
       return { [watch.flight]: watch.status };
     });
+
     this.watchListSubject.next(updatedWatchList);
   };
 
@@ -63,6 +64,8 @@ export class WatchListService {
   }
 
   getTrackProperties(): { [key: string]: string; }[] {
+    console.log('Getting track properties', this.trackProperties);
+
     return this.trackProperties || [];
   }
 
