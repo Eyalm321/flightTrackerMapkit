@@ -86,15 +86,12 @@ const mapAltitudeToStatus = (altitude) => {
 
 addEventListener('startTracking', async (resolve, reject, args) => {
     try {
-        const tracklist = args?.trackIds || [];
-        console.log(`Start tracking called with ${tracklist.length} flights`);
-        if (tracklist.length > 0) {
-            for (const flight of tracklist) {
-                const key = `flight_${flight.id}`;
-                const value = JSON.stringify({
-                    status: flight.status,
-                    altitude: flight.altitude
-                });
+        const trackIds = Object.keys(args);
+        console.log(`Start tracking called with ${trackIds.length} flights`);
+        if (Object.keys(args).length > 0) {
+            for (const id of trackIds) {
+                const key = id;
+                const value = args[id];
                 await storeData(key, value);
             }
             await trackFlightsInBackground();
