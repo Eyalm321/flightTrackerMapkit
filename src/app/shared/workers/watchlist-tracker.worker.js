@@ -88,7 +88,6 @@ const storeData = async (key, value) => {
         if (key.startsWith('flight_')) {
             let existingIds = {}; // Initialize as an empty array
             const existingIdsData = await CapacitorKV.get('flight_ids').value;
-            if (!existingIdsData) return;
             console.log(`Storing flight IDs: ${JSON.stringify(existingIdsData)}`);
             if (!Object.keys(existingIdsData).includes(key)) {
                 Object.assign(existingIdsData, { [key]: value });
