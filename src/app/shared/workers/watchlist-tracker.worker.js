@@ -35,7 +35,8 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                             return data;
                         });
                         console.log(`Data retrieved for flight ${id}:`, data);
-                        console.log(`Data retrieved for flight ${id}:`, data.results[0].length);
+                        console.log(`Data retrieved for flight ${id}:`, data['results'][0].length);
+                        console.log(`Data retrieved for flight ${id}:`, data['results'].length);
                         // if (data.ac && data.ac.length > 0) {
                         //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
                         const currentAltitude = data['ac'][0].alt_baro;
