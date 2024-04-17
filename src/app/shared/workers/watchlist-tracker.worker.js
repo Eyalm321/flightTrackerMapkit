@@ -7,8 +7,8 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 
     const interval = setInterval(async () => {
         let flights = await CapacitorKV.get('flight_ids').value;
-        console.log('All flight IDs:', JSON.stringify(flights));
-        console.log(`Checking ${flights.length} flights for updates`);
+        console.log("Flights data type:", typeof flights);
+        console.log("Flights content:", flights);
 
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;
@@ -102,7 +102,8 @@ const storeData = async (key, value) => {
 };
 
 const parseJsonArray = (jsonString) => {
-    return jsonString.replace(/^\[/, '').replace(/\]$/, '').split(',').map(item => item.trim().replace(/^"|"$/g, ''));
+    if (!jsonString) return []; // Handle empty string case
+    return jsonString.split(',').map(item => item.trim());
 };
 
 
