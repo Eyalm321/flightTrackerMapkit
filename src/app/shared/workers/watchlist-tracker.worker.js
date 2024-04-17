@@ -102,7 +102,7 @@ const storeData = async (key, value) => {
             console.log(existingIdsArr);
             const str = JSON.stringify(existingIdsArr);
             console.log(`Storing flight IDs: ${str}`);
-            await CapacitorKV.set('flight_ids', JSON.stringify(existingIdsArr));
+            await CapacitorKV.set('flight_ids', str);
         }
 
         console.log(`Data stored for ${key}`);
@@ -130,7 +130,7 @@ addEventListener('startTracking', async (resolve, reject, args) => {
             for (const id of trackIds) {
                 const key = `flight_${id}`;
                 const value = args[id];
-                console.log(`Storing data for flight ID: ${key}, value: ${JSON.stringify(value)}`);
+                console.log(`Storing data for flight ID: ${id} ${key}, value: ${JSON.stringify(value)}`);
                 await storeData(key, value);
             }
             await trackFlightsInBackground(resolve, reject, () => {
