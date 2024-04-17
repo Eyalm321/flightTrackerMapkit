@@ -27,40 +27,40 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                         const response = await fetch(`${baseUrl}/v2/icao/${id}`);
                         const data = await response.json();
                         console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data));
-                        if (data.ac && data.ac.length > 0) {
-                            console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
-                            const currentAltitude = data.ac[0].alt_baro;
-                            console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
-                            const currentStatus = mapAltitudeToStatus(currentAltitude);
-                            const storedStatus = await CapacitorKV.get(id).value;
+                        // if (data.ac && data.ac.length > 0) {
+                        //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
+                        const currentAltitude = data.ac[0].alt_baro;
+                        console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
+                        const currentStatus = mapAltitudeToStatus(currentAltitude);
+                        const storedStatus = await CapacitorKV.get(id).value;
 
-                            // Consider using a more efficient storage solution for larger datasets
-                            // await storeData(`flight_${id}`, storedStatus);
+                        // Consider using a more efficient storage solution for larger datasets
+                        // await storeData(`flight_${id}`, storedStatus);
 
-                            console.log('Flight updated:', id, currentStatus, currentAltitude);
+                        console.log('Flight updated:', id, currentStatus, currentAltitude);
 
-                            if (currentStatus !== storedStatus) {
-                                console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
+                        if (currentStatus !== storedStatus) {
+                            console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
 
-                                await storeData(id, currentStatus);
+                            await storeData(id, currentStatus);
 
-                                let scheduleDate = new Date();
-                                scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+                            let scheduleDate = new Date();
+                            scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
 
-                                await CapacitorNotifications.schedule({
-                                    notifications: [{
-                                        title: 'Flight Status Change',
-                                        body: `Flight ${id} is now ${currentStatus}`,
-                                        id: id,
-                                        scheduleAt: scheduleDate,
-                                    }]
-                                });
-                            }
-
-                            if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
-                                activeFlights = true;
-                            }
+                            await CapacitorNotifications.schedule({
+                                notifications: [{
+                                    title: 'Flight Status Change',
+                                    body: `Flight ${id} is now ${currentStatus}`,
+                                    id: id,
+                                    scheduleAt: scheduleDate,
+                                }]
+                            });
                         }
+
+                        if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
+                            activeFlights = true;
+                        }
+                        // }
                         resolve();
                     } catch (error) {
                         console.error('Error fetching flight data for flight ID', id, ':', error);
