@@ -167,7 +167,8 @@ addEventListener('startTracking', async (resolve, reject, args) => {
             });
 
             await Promise.all(storePromises);
-            await trackFlightsInBackground(resolve, reject, (watchlist) => {
+            await trackFlightsInBackground((watchlist) => {
+                console.log('Flight tracking completed.', watchlist);
                 resolve(watchlist);
             });
         } else {
