@@ -109,7 +109,7 @@ const notifyStatusChange = async (id, currentStatus, callsign) => {
 const getRandomInt = (min, max) => {
     // Create a buffer for one 32-bit unsigned integer
     const buffer = new Uint32Array(1);
-    window.crypto.getRandomValues(buffer);
+    self.crypto.getRandomValues(buffer);
 
     // Scale the number to the range (min, max)
     const range = max - min + 1;
