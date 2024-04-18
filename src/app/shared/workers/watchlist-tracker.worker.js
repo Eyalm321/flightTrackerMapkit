@@ -67,7 +67,7 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
     console.log(`Stored status for flight ${id}: ${storedStatus}`);
     console.log(`Current status for flight ${id}: ${currentStatus}`);
     storedStatus = storedStatus || 'Unknown';  // Default to 'Unknown' if no value is stored
-
+    notifyStatusChange(id, currentStatus, callsign);
     if (currentStatus !== storedStatus) {
         console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
         await storeData(id, currentStatus);
@@ -78,7 +78,7 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
 
 async function notifyStatusChange(id, currentStatus, callsign) {
     let scheduleDate = new Date();
-    scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+    scheduleDate.setSeconds(scheduleDate.getSeconds() + 1);
     await CapacitorNotifications.schedule({
         notifications: [{
             title: 'Flight Status Change',
