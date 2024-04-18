@@ -79,14 +79,14 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
 async function notifyStatusChange(id, currentStatus, callsign) {
     let scheduleDate = new Date();
     scheduleDate.setSeconds(scheduleDate.getSeconds() + 1);
-    await CapacitorNotifications.schedule({
-        notifications: [{
+    await CapacitorNotifications.schedule([
+        {
             title: 'Flight Status Change',
             body: `Flight ${callsign} is now ${currentStatus}`,
             id,
             scheduleAt: scheduleDate,
-        }]
-    });
+        }
+    ]);
 }
 
 const storeData = async (key, value) => {
