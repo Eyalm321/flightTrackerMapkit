@@ -82,15 +82,18 @@ async function notifyStatusChange(id, currentStatus, callsign) {
             let scheduleDate = new Date();
             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5); // Schedules the notification 5 seconds from now
 
+            // Generate a random integer ID for the notification
+            const notificationId = crypto.randomUUID();
+
             CapacitorNotifications.schedule([
                 {
-                    id: id, // It's better to use a unique identifier for each notification
+                    id: notificationId, // Randomly generated unique integer ID
                     title: `Flight Status Change for ${callsign}`,
                     body: `Status: ${currentStatus}`,
                     scheduleAt: scheduleDate,
                 }
             ]).then(() => {
-                console.log(`Notification scheduled for flight ${callsign}`);
+                console.log(`Notification scheduled for flight ${callsign} with notification ID ${notificationId}`);
                 resolve(); // Resolve the promise when scheduling is successful
             }).catch((err) => {
                 console.error(`Error scheduling notification for flight ${callsign}: ${err}`);
