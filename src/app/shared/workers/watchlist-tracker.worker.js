@@ -45,7 +45,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     }, intervalDuration);
 };
 
-async function fetchFlightData(id) {
+const fetchFlightData = async (id) => {
     console.log(`Fetching data for flight ID: ${id}`);
     const response = await fetch(`https://api.adsb.lol/v2/icao/${id}`);
     if (!response.ok) throw new Error(`Failed to fetch data for flight ${id}: ${response.statusText}`);
@@ -59,9 +59,9 @@ async function fetchFlightData(id) {
     const currentStatus = mapAltitudeToStatus(currentAltitude);
     const callsign = flightDetails.flight || 'N/A';
     return { id, currentStatus, currentAltitude, callsign };
-}
+};
 
-async function processFlightStatus(id, currentStatus, currentAltitude, callsign) {
+const processFlightStatus = async (id, currentStatus, currentAltitude, callsign) => {
     console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
     let storedStatus = await CapacitorKV.get(`flight_${id}`).value.trim().replace(/^"|"$/g, '');
     console.log(`Stored status for flight ${id}: ${storedStatus}`);
@@ -73,17 +73,17 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
         await storeData(id, currentStatus);
         notifyStatusChange(id, currentStatus, callsign);
     }
-}
+};
 
 
-async function notifyStatusChange(id, currentStatus, callsign) {
+const notifyStatusChange = async (id, currentStatus, callsign) => {
     return new Promise((resolve, reject) => {
         try {
             let scheduleDate = new Date();
             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5); // Schedules the notification 5 seconds from now
 
             // Generate a random integer ID for the notification
-            const notificationId = crypto.randomUUID();
+            const notificationId = getRandomInt(100000, 999999);
 
             CapacitorNotifications.schedule([
                 {
@@ -104,8 +104,17 @@ async function notifyStatusChange(id, currentStatus, callsign) {
             reject(err); // Handle any unexpected errors
         }
     });
-}
+};
 
+const getRandomInt = (min, max) => {
+    // Create a buffer for one 32-bit unsigned integer
+    const buffer = new Uint32Array(1);
+    window.crypto.getRandomValues(buffer);
+
+    // Scale the number to the range (min, max)
+    const range = max - min + 1;
+    return min + (buffer[0] % range);
+};
 
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
