@@ -2,7 +2,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
 
-    const intervalDuration = 120000; // Interval duration in milliseconds (120 seconds)
+    const intervalDuration = 20000; // Interval duration in milliseconds (120 seconds)
     const maxConcurrentFlights = 5; // Limit of concurrent flight requests
 
     const interval = setInterval(async () => {
@@ -47,7 +47,7 @@ async function fetchFlightData(id) {
     const response = await fetch(`https://api.adsb.lol/v2/icao/${id}`);
     if (!response.ok) throw new Error(`Failed to fetch data for flight ${id}: ${response.statusText}`);
     const data = await response.json();
-    const currentAltitude = data.ac && data.ac.length > 0 ? data.ac[0].alt_baro : null;
+    const currentAltitude = data.ac[0].alt_baro;
     const currentStatus = mapAltitudeToStatus(currentAltitude);
     return { id, currentStatus, currentAltitude };
 }

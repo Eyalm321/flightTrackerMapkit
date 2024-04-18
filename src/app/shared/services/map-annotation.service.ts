@@ -81,8 +81,6 @@ export class MapAnnotationService implements OnDestroy {
     }
   }
 
-
-
   constructor(
     private mapDataService: MapDataService,
     private mapStateService: MapStateService,
