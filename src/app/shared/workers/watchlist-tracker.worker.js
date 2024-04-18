@@ -21,7 +21,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                 await Promise.all(flightBatch.map(id => fetchFlightData(id)))
                     .then((results) => {
                         results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
-                            processFlightStatus(id, currentStatus, currentAltitude);
+                            processFlightStatus(id, currentStatus, currentAltitude, callsign);
                         });
                     })
                     .catch(error => {
@@ -85,6 +85,7 @@ async function notifyStatusChange(id, currentStatus, callsign) {
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
     try {
+        console.log(`Storing data for ${key}: ${value}`);
         await CapacitorKV.set(key, value);
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
