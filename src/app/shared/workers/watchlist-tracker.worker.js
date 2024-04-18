@@ -83,9 +83,8 @@ const notifyStatusChange = async (id, currentStatus, callsign) => {
             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5); // Schedules the notification 5 seconds from now
 
             // Generate a random integer ID for the notification
-            let notificationId = getRandomInt(100000, 999999);
+            const notificationId = getRandomInt(100000, 999999);
             console.log(`Scheduling notification for flight ${callsign} with notification ID ${notificationId}`);
-            if (notificationId === undefined) notificationId = Math.floor(Math.random() * 1000000);
             CapacitorNotifications.schedule([
                 {
                     id: notificationId, // Randomly generated unique integer ID
@@ -93,13 +92,7 @@ const notifyStatusChange = async (id, currentStatus, callsign) => {
                     body: `Status: ${currentStatus}`,
                     scheduleAt: scheduleDate,
                 }
-            ]).then(() => {
-                console.log(`Notification scheduled for flight ${callsign} with notification ID ${notificationId}`);
-                resolve(); // Resolve the promise when scheduling is successful
-            }).catch((err) => {
-                console.error(`Error scheduling notification for flight ${callsign}: ${err}`);
-                reject(err); // Reject the promise if an error occurs
-            });
+            ]);
         } catch (err) {
             console.error(`An error occurred in notifyStatusChange: ${err}`);
             reject(err); // Handle any unexpected errors
