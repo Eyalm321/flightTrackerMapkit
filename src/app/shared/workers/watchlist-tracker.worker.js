@@ -77,22 +77,32 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
 
 
 async function notifyStatusChange(id, currentStatus, callsign) {
-    let scheduleDate = new Date();
-    scheduleDate.setSeconds(scheduleDate.getSeconds() + 1);
-    console.log(`Scheduling notification for flight ${id}: ${currentStatus}`);
-    await CapacitorNotifications.schedule([
-        {
-            title: 'Flight Status Change',
-            body: `Flight ${callsign} is now ${currentStatus}`,
-            id,
-            scheduleAt: scheduleDate,
+    return new Promise((resolve, reject) => {
+        try {
+            let scheduleDate = new Date();
+            scheduleDate.setSeconds(scheduleDate.getSeconds() + 5); // Schedules the notification 5 seconds from now
+
+            CapacitorNotifications.schedule([
+                {
+                    id: id, // It's better to use a unique identifier for each notification
+                    title: `Flight Status Change for ${callsign}`,
+                    body: `Status: ${currentStatus}`,
+                    scheduleAt: scheduleDate,
+                }
+            ]).then(() => {
+                console.log(`Notification scheduled for flight ${callsign}`);
+                resolve(); // Resolve the promise when scheduling is successful
+            }).catch((err) => {
+                console.error(`Error scheduling notification for flight ${callsign}: ${err}`);
+                reject(err); // Reject the promise if an error occurs
+            });
+        } catch (err) {
+            console.error(`An error occurred in notifyStatusChange: ${err}`);
+            reject(err); // Handle any unexpected errors
         }
-    ]).then(() => {
-        console.log(`Notification scheduled for flight ${id}: ${currentStatus}`);
-    }).catch(error => {
-        console.error(`Failed to schedule notification for flight ${id}: ${currentStatus}`, error);
     });
 }
+
 
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
