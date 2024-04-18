@@ -7,6 +7,7 @@ import { BackgroundWebworkerService } from './background-webworker.service';
 import { AppStateService } from './app-state.service';
 
 interface WatchDetails {
+  id: string;
   flight: string;
   origin: string;
   destination: string;
@@ -36,7 +37,7 @@ export class WatchListService {
     updatedWatchList.unshift(watchDetails);
 
     this.trackProperties = updatedWatchList.reduce((acc, watch) => {
-      return { ...acc, [watch.flight]: watch.status };
+      return { ...acc, [watch.id]: watch.status };
     }, {});
 
     this.watchListSubject.next(updatedWatchList);
@@ -44,7 +45,8 @@ export class WatchListService {
 
   private mapWatchDetailsFromAnnotationData(annotationData: AnnotationData): WatchDetails {
     return {
-      flight: annotationData.id || '',
+      id: annotationData.id || '',
+      flight: annotationData.flightDetails?.callsign || '',
       origin: annotationData.originAirport?.iata || '',
       destination: annotationData.destinationAirport?.iata || '',
       status: this.getStatusFromAltitude(annotationData.dynamic?.altitude || 'Unknown'),

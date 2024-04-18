@@ -20,7 +20,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
 
                 await Promise.all(flightBatch.map(id => fetchFlightData(id)))
                     .then((results) => {
-                        results.forEach(({ id, currentStatus, currentAltitude }) => {
+                        results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
                             processFlightStatus(id, currentStatus, currentAltitude);
                         });
                     })
@@ -54,27 +54,28 @@ async function fetchFlightData(id) {
     console.log(`Length of ac: ${data['ac'].length}`);
     const currentAltitude = flightDetails.alt_baro || 'ground';
     const currentStatus = mapAltitudeToStatus(currentAltitude);
-    return { id, currentStatus, currentAltitude };
+    const callsign = flightDetails.flight || 'N/A';
+    return { id, currentStatus, currentAltitude, callsign };
 }
 
-async function processFlightStatus(id, currentStatus, currentAltitude) {
+async function processFlightStatus(id, currentStatus, currentAltitude, callsign) {
     console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
     const storedStatus = await CapacitorKV.get(id).value;
 
     if (currentStatus !== storedStatus) {
         console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
         await storeData(id, currentStatus);
-        notifyStatusChange(id, currentStatus);
+        notifyStatusChange(id, currentStatus, callsign);
     }
 }
 
-async function notifyStatusChange(id, currentStatus) {
+async function notifyStatusChange(id, currentStatus, callsign) {
     let scheduleDate = new Date();
     scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
     await CapacitorNotifications.schedule({
         notifications: [{
             title: 'Flight Status Change',
-            body: `Flight ${id} is now ${currentStatus}`,
+            body: `Flight ${callsign} is now ${currentStatus}`,
             id,
             scheduleAt: scheduleDate,
         }]
