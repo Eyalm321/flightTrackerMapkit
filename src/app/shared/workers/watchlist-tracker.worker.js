@@ -63,7 +63,7 @@ async function fetchFlightData(id) {
 
 async function processFlightStatus(id, currentStatus, currentAltitude, callsign) {
     console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
-    let storedStatus = await CapacitorKV.get(`flight_${id}`).value;
+    let storedStatus = await CapacitorKV.get(`flight_${id}`).value.trim().replace(/^"|"$/g, '');
     console.log(`Stored status for flight ${id}: ${storedStatus}`);
     console.log(`Current status for flight ${id}: ${currentStatus}`);
     storedStatus = storedStatus || 'Unknown';  // Default to 'Unknown' if no value is stored
