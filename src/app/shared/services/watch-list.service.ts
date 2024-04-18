@@ -79,12 +79,20 @@ export class WatchListService {
   }
 
   private updateWatchlistFromBackgroundTask(watchlist: { [key: string]: string; }): void {
-    console.log('Updating watchlist from background task', watchlist);
 
-    const updatedWatchList = this.watchListSubject.value.map((watch) => {
-      return { ...watch, status: watchlist[watch.id] };
-    });
+    const cleanedWatchlist = Object.fromEntries(
+      Object.entries(watchlist).map(([id, status]) => [
+        id,
+        status.replace(/\\"|"/g, ''), // Removes unnecessary quotes and escapes
+      ])
+    );
+    console.log('Updating watchlist from background task', cleanedWatchlist);
+    const updatedWatchList = this.watchListSubject.value.map((watch) => ({
+      ...watch,
+      status: cleanedWatchlist[watch.id] || 'Unknown', // Handle missing statuses
+    }));
 
+    console.log('Updating watchlist from background task', updatedWatchList);
     this.watchListSubject.next(updatedWatchList);
   }
 }
