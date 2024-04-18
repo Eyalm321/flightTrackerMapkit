@@ -83,8 +83,9 @@ const notifyStatusChange = async (id, currentStatus, callsign) => {
             scheduleDate.setSeconds(scheduleDate.getSeconds() + 5); // Schedules the notification 5 seconds from now
 
             // Generate a random integer ID for the notification
-            const notificationId = getRandomInt(100000, 999999);
-
+            let notificationId = getRandomInt(100000, 999999);
+            console.log(`Scheduling notification for flight ${callsign} with notification ID ${notificationId}`);
+            if (notificationId === undefined) notificationId = Math.floor(Math.random() * 1000000);
             CapacitorNotifications.schedule([
                 {
                     id: notificationId, // Randomly generated unique integer ID
