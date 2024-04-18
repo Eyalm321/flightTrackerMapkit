@@ -44,7 +44,7 @@ export class WatchListService {
 
   private mapWatchDetailsFromAnnotationData(annotationData: AnnotationData): WatchDetails {
     return {
-      flight: annotationData.flightDetails?.callsign || '',
+      flight: annotationData.id || '',
       origin: annotationData.originAirport?.iata || '',
       destination: annotationData.destinationAirport?.iata || '',
       status: this.getStatusFromAltitude(annotationData.dynamic?.altitude || 'Unknown'),
