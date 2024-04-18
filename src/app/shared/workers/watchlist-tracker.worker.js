@@ -79,6 +79,7 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
 async function notifyStatusChange(id, currentStatus, callsign) {
     let scheduleDate = new Date();
     scheduleDate.setSeconds(scheduleDate.getSeconds() + 1);
+    console.log(`Scheduling notification for flight ${id}: ${currentStatus}`);
     await CapacitorNotifications.schedule([
         {
             title: 'Flight Status Change',
@@ -86,7 +87,11 @@ async function notifyStatusChange(id, currentStatus, callsign) {
             id,
             scheduleAt: scheduleDate,
         }
-    ]);
+    ]).then(() => {
+        console.log(`Notification scheduled for flight ${id}: ${currentStatus}`);
+    }).catch(error => {
+        console.error(`Failed to schedule notification for flight ${id}: ${currentStatus}`, error);
+    });
 }
 
 const storeData = async (key, value) => {
