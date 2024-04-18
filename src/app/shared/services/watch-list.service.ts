@@ -71,10 +71,21 @@ export class WatchListService {
     return this.trackProperties || {};
   }
 
-  startBackgroundTask(): void {
+  async startBackgroundTask(): Promise<void> {
     console.log('Starting background task');
 
-    this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', this.getTrackProperties());
+    const watchlist = await this.backgroundWebworkerService.startBackgroundTask('com.eyalmizrachi.flightTracker.watchlistTracker', 'startTracking', this.getTrackProperties());
+    this.updateWatchlistFromBackgroundTask(watchlist);
+  }
+
+  private updateWatchlistFromBackgroundTask(watchlist: { [key: string]: string; }): void {
+    console.log('Updating watchlist from background task', watchlist);
+
+    const updatedWatchList = this.watchListSubject.value.map((watch) => {
+      return { ...watch, status: watchlist[watch.id] };
+    });
+
+    this.watchListSubject.next(updatedWatchList);
   }
 }
 

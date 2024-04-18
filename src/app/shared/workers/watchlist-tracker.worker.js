@@ -1,5 +1,5 @@
-const trackFlightsInBackground = async (resolve, reject, completed) => {
-    let activeFlights = true;
+const trackFlightsInBackground = async (completed) => {
+    let activeFlights = false;
 
     const intervalDuration = 20000;
     const maxConcurrentFlights = 5;
@@ -8,32 +8,68 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
         let flightsData = await CapacitorKV.get('flight_ids').value;
         const flights = flightsData.split(',').filter(id => id.trim() !== '');
         if (flights.length > 0) {
-            activeFlights = false;
             for (let i = 0; i < flights.length; i += maxConcurrentFlights) {
                 const flightBatch = flights.slice(i, i + maxConcurrentFlights);
-                await Promise.all(flightBatch.map(id => fetchFlightData(id)))
-                    .then((results) => {
-                        results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
-                            processFlightStatus(id, currentStatus, currentAltitude, callsign);
-                            if (currentStatus !== 'Grounded') {
-                                activeFlights = true;
-                            }
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Failed to process flight batch:', error);
+                try {
+                    const results = await Promise.all(flightBatch.map(id => fetchFlightData(id)));
+                    results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
+                        processFlightStatus(id, currentStatus, currentAltitude, callsign);
+                        if (currentStatus !== 'Grounded' && currentStatus !== 'Unknown') {
+                            activeFlights = true;
+                        }
                     });
+                } catch (error) {
+                    console.error('Failed to process flight batch:', error);
+                }
             }
 
+            const watchlist = await processWatchlistFromStorage();
+            completed(watchlist);
+
             if (!activeFlights) {
+                await deleteFlightsFromStorage();
                 clearInterval(interval);
-                completed();
+                completed(watchlist);
             }
         } else {
+            const watchlist = await processWatchlistFromStorage();
+            await deleteFlightsFromStorage();
             clearInterval(interval);
-            completed();
+            completed(watchlist);
         }
     }, intervalDuration);
+};
+
+
+const retrieveFlightsFromStorage = async () => {
+    let watchlist = {};
+    const watchlistIds = await CapacitorKV.get('flight_ids').value;
+
+    if (watchlistIds) {
+        const ids = watchlistIds.split(',').filter(id => id.trim() !== '');
+
+        for (const id of ids) {
+            const value = await CapacitorKV.get(`flight_${id}`).value;
+            watchlist[id] = value;  // Assign the retrieved value directly to the watchlist object.
+        }
+    }
+
+    return watchlist;
+};
+
+const deleteFlightsFromStorage = async () => {
+    const watchlistIds = await CapacitorKV.get('flight_ids').value;
+
+    if (watchlistIds) {
+        const ids = watchlistIds.split(',').filter(id => id.trim() !== '');
+
+        for (const id of ids) {
+            await CapacitorKV.delete(`flight_${id}`);  // Delete the flight entry after processing.
+        }
+
+        // Optionally reset the flight_ids after all individual flights are deleted.
+        await CapacitorKV.set('flight_ids', '');
+    }
 };
 
 const fetchFlightData = async (id) => {
@@ -69,8 +105,9 @@ const notifyStatusChange = async (id, currentStatus, callsign) => {
                     title: `Flight Status Change for ${callsign}`,
                     body: `Status: ${currentStatus}`,
                     scheduleAt: scheduleDate,
-                }
+                },
             ]);
+            resolve();
         } catch (err) {
             console.error(`An error occurred in notifyStatusChange: ${err}`);
             reject(err);
@@ -130,11 +167,13 @@ addEventListener('startTracking', async (resolve, reject, args) => {
             });
 
             await Promise.all(storePromises);
-            await trackFlightsInBackground(resolve, reject, () => {
-                resolve();
+            await trackFlightsInBackground(resolve, reject, (watchlist) => {
+                resolve(watchlist);
             });
+        } else {
+            console.log('No flights to track. Stopping background tracking.');
+            reject();
         }
-        resolve();
     } catch (error) {
         console.error('Failed to initiate tracking:', error);
         reject();
