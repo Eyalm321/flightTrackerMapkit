@@ -96,6 +96,13 @@ const storeData = async (key, value) => {
         await CapacitorKV.set(key, value);
         const savedData = await CapacitorKV.get(key);
         console.log(`Data stored for ${key}: ${savedData.value}`);
+
+        if (key.startsWith('flight_') && savedData.value === undefined && value === undefined) {
+            await CapacitorKV.set(`${key}`, 'Unknown'); // Default status
+        } else if (key.startsWith('flight_') && savedData.value === undefined && value !== undefined) {
+            await CapacitorKV.set(`${key}`, value);
+        }
+
         if (key.startsWith('flight_')) {
             let existingIdsData = await CapacitorKV.get('flight_ids').value;
             if (!existingIdsData.includes(key.replace('flight_', ''))) {
