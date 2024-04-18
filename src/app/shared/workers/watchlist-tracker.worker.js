@@ -12,8 +12,8 @@ const trackFlightsInBackground = async (completed) => {
                 const flightBatch = flights.slice(i, i + maxConcurrentFlights);
                 try {
                     const results = await Promise.all(flightBatch.map(id => fetchFlightData(id)));
-                    results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
-                        processFlightStatus(id, currentStatus, currentAltitude, callsign);
+                    results.forEach(({ id, currentStatus, callsign }) => {
+                        processFlightStatus(id, currentStatus, callsign);
                         if (currentStatus !== 'Grounded' && currentStatus !== 'Unknown') {
                             activeFlights = true;
                         }
@@ -23,7 +23,9 @@ const trackFlightsInBackground = async (completed) => {
                 }
             }
 
+            console.log('Processing watchlist...');
             const watchlist = await processWatchlistFromStorage();
+            console.log('Watchlist processed:', watchlist);
             completed(watchlist);
 
             if (!activeFlights) {
@@ -80,10 +82,10 @@ const fetchFlightData = async (id) => {
     const currentAltitude = flightDetails.alt_baro || 'ground';
     const currentStatus = mapAltitudeToStatus(currentAltitude);
     const callsign = flightDetails.flight || 'N/A';
-    return { id, currentStatus, currentAltitude, callsign };
+    return { id, currentStatus, callsign };
 };
 
-const processFlightStatus = async (id, currentStatus, currentAltitude, callsign) => {
+const processFlightStatus = async (id, currentStatus, callsign) => {
     let storedStatus = await CapacitorKV.get(`flight_${id}`).value.trim().replace(/^"|"$/g, '');
     storedStatus = storedStatus || 'Unknown';
     notifyStatusChange(id, currentStatus, callsign);
