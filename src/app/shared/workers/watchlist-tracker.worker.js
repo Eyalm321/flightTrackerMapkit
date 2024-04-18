@@ -2,86 +2,37 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
 
-    const intervalDuration = 30000; // Increased interval to 120 seconds
-    const maxConcurrentFlights = 5; // Limit concurrent requests
+    const intervalDuration = 120000; // Interval duration in milliseconds (120 seconds)
+    const maxConcurrentFlights = 5; // Limit of concurrent flight requests
 
     const interval = setInterval(async () => {
         let flightsData = await CapacitorKV.get('flight_ids').value;
-        const flights = [];
-        flightsData.split(',').forEach((id, index) => {
-            if (index > 0) flights.push(id);
-        });
+        const flights = flightsData.split(',').filter(id => id.trim() !== '');
 
         console.log(`Checking ${flights.length} flights`);
         console.log(`Flight IDs: ${JSON.stringify(flights)}`);
+
         if (flights.length > 0 && activeFlights) {
             activeFlights = false;
 
-            // Process flights in batches
             for (let i = 0; i < flights.length; i += maxConcurrentFlights) {
                 const flightBatch = flights.slice(i, i + maxConcurrentFlights);
-                await Promise.all(flightBatch.map(async (id) => {
-                    console.log(`Fetching data for flight ID: ${id}`);
-                    try {
-                        const baseUrl = 'https://api.adsb.lol';
-                        const response = await fetch(`https://randomuser.me/api/`);
 
-                        if (!response.ok) {
-                            console.error(`Failed to fetch data for flight ${id}:`, response.statusText);
-                            return;
-                        }
-
-                        const data = await response.json().then((data) => {
-                            return data;
+                await Promise.all(flightBatch.map(id => fetchFlightData(id)))
+                    .then((results) => {
+                        results.forEach(({ id, currentStatus, currentAltitude }) => {
+                            processFlightStatus(id, currentStatus, currentAltitude);
                         });
-                        console.log(`Data retrieved for flight ${id}:`, data);
-                        console.log(`Data retrieved for flight ${id}:`, data['results'][0].length);
-                        console.log(`Data retrieved for flight ${id}:`, data['results'].length);
-                        // if (data.ac && data.ac.length > 0) {
-                        //     console.log(`Data retrieved for flight ${id}:`, JSON.stringify(data.ac[0]));
-                        const currentAltitude = data['ac'][0].alt_baro;
-                        console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
-                        const currentStatus = mapAltitudeToStatus(currentAltitude);
-                        const storedStatus = await CapacitorKV.get(id).value;
-
-                        // Consider using a more efficient storage solution for larger datasets
-                        // await storeData(`flight_${id}`, storedStatus);
-
-                        console.log('Flight updated:', id, currentStatus, currentAltitude);
-
-                        if (currentStatus !== storedStatus) {
-                            console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
-
-                            await storeData(id, currentStatus);
-
-                            let scheduleDate = new Date();
-                            scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
-
-                            await CapacitorNotifications.schedule({
-                                notifications: [{
-                                    title: 'Flight Status Change',
-                                    body: `Flight ${id} is now ${currentStatus}`,
-                                    id: id,
-                                    scheduleAt: scheduleDate,
-                                }]
-                            });
-                        }
-
-                        if (currentStatus !== 'Grounded' && currentStatus !== 'Landing / Take off') {
-                            activeFlights = true;
-                        }
-                        // }
-                    } catch (error) {
-                        console.error('Error fetching flight data for flight ID', id, ':', error);
-                    }
-                }));
+                    })
+                    .catch(error => {
+                        console.error('Failed to process flight batch:', error);
+                    });
             }
 
             if (!activeFlights) {
                 clearInterval(interval);
                 console.log('All flights are landed or data not available. Stopping background tracking.');
-                // Call completed() to signal task completion
-                completed(); // Assuming this function exists within your background task framework
+                completed();
             }
         } else {
             clearInterval(interval);
@@ -90,6 +41,40 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
         }
     }, intervalDuration);
 };
+
+async function fetchFlightData(id) {
+    console.log(`Fetching data for flight ID: ${id}`);
+    const response = await fetch(`https://api.adsb.lol/v2/icao/${id}`);
+    if (!response.ok) throw new Error(`Failed to fetch data for flight ${id}: ${response.statusText}`);
+    const data = await response.json();
+    const currentAltitude = data.ac && data.ac.length > 0 ? data.ac[0].alt_baro : null;
+    const currentStatus = mapAltitudeToStatus(currentAltitude);
+    return { id, currentStatus, currentAltitude };
+}
+
+async function processFlightStatus(id, currentStatus, currentAltitude) {
+    console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
+    const storedStatus = await CapacitorKV.get(id).value;
+
+    if (currentStatus !== storedStatus) {
+        console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
+        await storeData(id, currentStatus);
+        notifyStatusChange(id, currentStatus);
+    }
+}
+
+async function notifyStatusChange(id, currentStatus) {
+    let scheduleDate = new Date();
+    scheduleDate.setSeconds(scheduleDate.getSeconds() + 5);
+    await CapacitorNotifications.schedule({
+        notifications: [{
+            title: 'Flight Status Change',
+            body: `Flight ${id} is now ${currentStatus}`,
+            id,
+            scheduleAt: scheduleDate,
+        }]
+    });
+}
 
 const storeData = async (key, value) => {
     console.log(`Storing data for ${key}`);
