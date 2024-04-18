@@ -24,7 +24,7 @@ const trackFlightsInBackground = async (completed) => {
             }
 
             console.log('Processing watchlist...');
-            const watchlist = await processWatchlistFromStorage();
+            const watchlist = await retrieveFlightsFromStorage();
             console.log('Watchlist processed:', watchlist);
             completed(watchlist);
 
@@ -34,7 +34,7 @@ const trackFlightsInBackground = async (completed) => {
                 completed(watchlist);
             }
         } else {
-            const watchlist = await processWatchlistFromStorage();
+            const watchlist = await retrieveFlightsFromStorage();
             await deleteFlightsFromStorage();
             clearInterval(interval);
             completed(watchlist);
