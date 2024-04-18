@@ -2,7 +2,7 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
     let activeFlights = true;
     console.log('Tracking service started, checking for active flights');
 
-    const intervalDuration = 20000; // Interval duration in milliseconds (120 seconds)
+    const intervalDuration = 20000; // Interval duration in milliseconds (20 seconds)
     const maxConcurrentFlights = 5; // Limit of concurrent flight requests
 
     const interval = setInterval(async () => {
@@ -12,8 +12,8 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
         console.log(`Checking ${flights.length} flights`);
         console.log(`Flight IDs: ${JSON.stringify(flights)}`);
 
-        if (flights.length > 0 && activeFlights) {
-            activeFlights = false;
+        if (flights.length > 0) {
+            activeFlights = false; // Assume no flights are active initially
 
             for (let i = 0; i < flights.length; i += maxConcurrentFlights) {
                 const flightBatch = flights.slice(i, i + maxConcurrentFlights);
@@ -22,6 +22,9 @@ const trackFlightsInBackground = async (resolve, reject, completed) => {
                     .then((results) => {
                         results.forEach(({ id, currentStatus, currentAltitude, callsign }) => {
                             processFlightStatus(id, currentStatus, currentAltitude, callsign);
+                            if (currentStatus !== 'Grounded') {
+                                activeFlights = true; // Mark as active if any flight is not grounded
+                            }
                         });
                     })
                     .catch(error => {
@@ -60,7 +63,8 @@ async function fetchFlightData(id) {
 
 async function processFlightStatus(id, currentStatus, currentAltitude, callsign) {
     console.log(`Data retrieved for flight ${id}: Altitude: ${currentAltitude}`);
-    const storedStatus = await CapacitorKV.get(id).value;
+    let storedStatus = await CapacitorKV.get(id).value;
+    storedStatus = storedStatus || 'Unknown';  // Default to 'Unknown' if no value is stored
 
     if (currentStatus !== storedStatus) {
         console.log(`Status change detected for flight ${id}: from ${storedStatus} to ${currentStatus}`);
@@ -68,6 +72,7 @@ async function processFlightStatus(id, currentStatus, currentAltitude, callsign)
         notifyStatusChange(id, currentStatus, callsign);
     }
 }
+
 
 async function notifyStatusChange(id, currentStatus, callsign) {
     let scheduleDate = new Date();
