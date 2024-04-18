@@ -122,12 +122,15 @@ addEventListener('startTracking', async (resolve, reject, args) => {
         console.log(`Start tracking called with ${trackIds.length} flights`);
         if (Object.keys(args).length > 0) {
             CapacitorKV.set('flight_ids', '');
-            for (const id of trackIds) {
+            const storePromises = trackIds.map(id => {
                 const key = `flight_${id}`;
                 const value = JSON.stringify(args[id]);
-                console.log(`Storing data for flight ID: ${id} ${key}, value: ${JSON.stringify(value)}`);
-                await storeData(key, value);
-            }
+                console.log(`Storing data for flight ID: ${id} ${key}, value: ${value}`);
+                return storeData(key, value);
+            });
+
+            await Promise.all(storePromises);
+
             await trackFlightsInBackground(resolve, reject, () => {
                 console.log('Background tracking completed');
                 resolve();
