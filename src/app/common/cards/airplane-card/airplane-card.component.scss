@@ -53,9 +53,17 @@
     width: inherit;
     max-height: 75vh;
     max-width: 500px;
-    padding: 0 var(--ion-padding-half);
     border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
+    padding-bottom: var(--ion-safe-area-bottom, 0);
+    padding-top: var(--ion-safe-area-top, 0);
+    padding-left: var(--ion-safe-area-left, 0);
+    padding-right: var(--ion-safe-area-right, 0);
+    background: linear-gradient(to bottom, var(--ion-color-step-100), var(--ion-color-step-50));
+    background-color: var(--background);
 
+    .content-wrapper {
+        padding: 0 var(--ion-padding-half);
+    }
 
     .flight-info {
         ion-card-title {
@@ -192,7 +200,10 @@
 
     .flight-card {
         border-radius: var(--ion-border-radius-medium) 0 0 var(--ion-border-radius-medium);
-        padding: 0 var(--ion-padding-half) 0 0;
+
+        .content-wrapper {
+            padding: var(--ion-padding-half);
+        }
     }
 }
 
