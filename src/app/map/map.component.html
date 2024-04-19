@@ -26,6 +26,7 @@
     </ion-fab-button>
   </ion-fab>
   <div #draggableContainer
+       *ngIf="trackView"
        class="draggable-container">
     <app-airplane-card id="cardEl"
                        class="card-container"
