@@ -23,7 +23,7 @@
 
 .card-handle-container {
     display: flex;
-    align-items: center;
+    align-items: start;
     width: 100%;
     height: 12px;
     pointer-events: all;
@@ -55,7 +55,7 @@
     max-width: 500px;
     border-radius: var(--ion-border-radius-medium) var(--ion-border-radius-medium) 0 0;
     padding-bottom: var(--ion-safe-area-bottom, 0);
-    padding-top: var(--ion-safe-area-top, 0);
+    padding-top: 0;
     padding-left: var(--ion-safe-area-left, 0);
     padding-right: var(--ion-safe-area-right, 0);
     background: linear-gradient(to bottom, var(--ion-color-step-100), var(--ion-color-step-50));
